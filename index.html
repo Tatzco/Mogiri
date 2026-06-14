@@ -436,7 +436,7 @@ const G={ scene:'home', day:1, units:0, owed:0, arrears:0, prestige:0, xp:0,
 function baseValue(){ return 1 + G.valueLevel + 3*G.prestige; }
 function fieldCap(){ return 1 + G.motivation; }
 function moveLevelReq(){ return 25 + 10*G.prestige; }
-function prestigeLevelReq(){ return 35 + 15*G.prestige; }
+function prestigeLevelReq(){ return 60 + 25*G.prestige; }
 function machineCap(){ return 1 + G.gearLevel; }
 function tearMs(){ return Math.round(BASE_TEAR_MS/(1+0.4*G.motorLevel)); }
 function dailyBill(){ return (G.moved?MOVED_BILL:BASE_BILL) + BILL_STEP*Math.floor((G.day-1)/7); }
@@ -766,7 +766,7 @@ function doGameOver(reason){ G.scene='gameover'; clearSave(); Audio_.gameover();
   const jinxBanner=$('over-jinx-banner');
   if(jinxBanner){ jinxBanner.style.display=(achieved.jinx && reason!=='jinx')?'block':'none'; }
   openOverlay('overOv'); }
-function doPrestige(){ G.prestige++; G.units=0; G.owed=0; G.arrears=0; G.day=1;
+function doPrestige(){ G.prestige++; G.owed=0; G.arrears=0; G.day=1;
   G.valueLevel=0; G.stock=0; G.vet=false; G.machine=false; G.service=false; G.gearLevel=0; G.motorLevel=0;
   Audio_.chime(); renderHome(); saveGame(); }
 function resetGame(){ clearSave(); closeOverlay('overOv'); closeOverlay('optsOv'); Object.assign(G,{ scene:'home', day:1, units:0, owed:0, arrears:0, prestige:0, xp:0,
