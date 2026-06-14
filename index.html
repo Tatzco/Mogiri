@@ -435,15 +435,15 @@ const G={ scene:'home', day:1, units:0, owed:0, arrears:0, prestige:0, xp:0,
   gearLevel:0, motorLevel:0, moved:false, pNotified:false, mNotified:false, shiftElapsed:0, shiftStartUnits:0, paused:false, actives:[] };
 function baseValue(){ return 1 + G.valueLevel + 3*G.prestige; }
 function fieldCap(){ return 1 + G.motivation; }
-function moveLevelReq(){ return MOVE_LEVEL + 5*G.prestige; }
-function prestigeLevelReq(){ return PRESTIGE_LEVEL + 5*G.prestige; }
+function moveLevelReq(){ return 25 + 10*G.prestige; }
+function prestigeLevelReq(){ return 35 + 15*G.prestige; }
 function machineCap(){ return 1 + G.gearLevel; }
 function tearMs(){ return Math.round(BASE_TEAR_MS/(1+0.4*G.motorLevel)); }
 function dailyBill(){ return (G.moved?MOVED_BILL:BASE_BILL) + BILL_STEP*Math.floor((G.day-1)/7); }
 function skillsCount(){ return (G.valueLevel>0?1:0)+(G.stock?1:0)+(G.vet?1:0)+(G.machine?1:0)+(G.service?1:0)+(G.motivation?1:0); }
 function pPriority(){ return Math.min(0.6, 0.05 + 0.02*G.stock); }
 function pFake(){ return skillsCount()>=2 ? 0.02 : 0; }
-function xpForLevel(L){ return Math.round(25*Math.pow(1.10,L-1)); }
+function xpForLevel(L){ return Math.round(25*Math.pow(1.13,L-1)); }
 function levelInfo(){ let L=1, acc=0; for(let i=0;i<999;i++){ const need=xpForLevel(L); if(G.xp>=acc+need){ acc+=need; L++; } else return {level:L,cur:G.xp-acc,need}; } return {level:L,cur:0,need:xpForLevel(L)}; }
 function level(){ return levelInfo().level; }
 /* ===== SAVE (autosave each turn) ===== */
