@@ -157,6 +157,7 @@
     border:1px solid var(--line); background:#fff; color:var(--ink); min-width:100px; text-align:center;}
   .auto-btn:disabled{opacity:.45; cursor:default;}
   .auto-btn:not(:disabled):active{transform:scale(.97);}
+  .auto-btn.on{background:#4E9E6E; color:#fff; border-color:#3c7d57; box-shadow:0 0 0 3px rgba(78,158,110,.25);}
   .recv-btn{position:absolute; right:74px; bottom:14px; width:66px; height:66px; touch-action:none;
     cursor:pointer; font-family:var(--display); font-weight:800; letter-spacing:.04em; font-size:15px;
     border-radius:14px; color:#3a2607; border:1px solid var(--brass-d); z-index:6;
@@ -317,7 +318,7 @@
     <dd>
       ・<b>モチベーション</b>：チケットを同時に出せる枚数が増え、重ねて一気にちぎれる。<br>
       ・<b>審美眼</b>：一気にちぎる時、偽物だけ自動でよけてくれる。<br>
-      ・<b>機械化</b>：「投入」でちぎりを任せられる（置くのは自分）。
+      ・<b>機械化</b>：「機械」ボタンON/OFFで自動化。ONの間は受付したチケットを機械が自動でちぎって提出（偽物は審美眼があれば自動でよける）。
     </dd>
   </dl>
   <div class="btnrow" style="margin-top:16px"><button class="btn" id="help-close">閉じる</button></div>
@@ -432,7 +433,7 @@ const SVGNS='http://www.w3.org/2000/svg';
 const SHIFT_MS=3*60*1000, BASE_TEAR_MS=500, BASE_BILL=80, MOVED_BILL=320, BILL_STEP=25, MOVE_LEVEL=20, PRESTIGE_LEVEL=25;
 const G={ scene:'home', day:1, units:0, owed:0, arrears:0, prestige:0, xp:0,
   valueLevel:0, stock:0, vet:false, machine:false, service:false, motivation:0, appraisal:false,
-  gearLevel:0, motorLevel:0, moved:false, pNotified:false, mNotified:false, shiftElapsed:0, shiftStartUnits:0, paused:false, actives:[] };
+  gearLevel:0, motorLevel:0, moved:false, pNotified:false, mNotified:false, shiftElapsed:0, shiftStartUnits:0, paused:false, machineAuto:false, actives:[] };
 function baseValue(){ return 1 + G.valueLevel + 3*G.prestige; }
 function fieldCap(){ return 1 + G.motivation; }
 function onFieldCount(){ return G.actives.filter(a=>!a.placed && !a.resolved).length; }
@@ -655,17 +656,27 @@ function stampTicket(tk){ if(!tk||tk.resolved||tk.placed) return; tk.processing=
 /* ===== MACHINE (insert -> tears -> you place) ===== */
 function processingCount(){ return G.actives.filter(a=>a.processing).length; }
 function updateMachineBusy(){ machineBox.classList.toggle('busy', processingCount()>0); }
-function feedMachine(){ if(!G.machine) return; let free=machineCap()-processingCount();
-  for(const tk of G.actives){ if(free<=0) break;
-    if(!tk.torn && !tk.processing && !tk.resolved && !tk.placed){ tk.processing=true; tk.procT=0; tk.procDur=tearMs();
-      tk.proc.innerHTML=`<g class="gear" transform="translate(${(tk.Wv*0.5).toFixed(1)} ${(tk.Hv*0.5).toFixed(1)})"><circle r="${(tk.Hv*0.19).toFixed(1)}" fill="rgba(20,14,8,.5)"/><g class="gspin">${gearPath(tk.Hv*0.13)}</g></g>`;
-      Audio_.motor(); free--; } }
+function toggleMachineAuto(){ if(!G.machine) return; G.machineAuto=!G.machineAuto;
+  if(G.machineAuto){ Audio_.ensure(); Audio_.resume(); autoFeedStep(); }
+  updateControls(); refreshHints(); }
+/* ONの間、場の未処理チケットを機械へ。偽物は審美眼ありなら機械に入れず即追放、なければそのまま送る */
+function autoFeedStep(){ if(!G.machine || !G.machineAuto) return;
+  for(const tk of G.actives.slice()){
+    if(tk.torn || tk.processing || tk.resolved || tk.placed) continue;
+    if(tk.type==='fake' && G.appraisal){ stampTicket(tk); continue; }
+    if(processingCount()>=machineCap()) break;
+    tk.processing=true; tk.machineFed=true; tk.procT=0; tk.procDur=tearMs();
+    tk.proc.innerHTML=`<g class="gear" transform="translate(${(tk.Wv*0.5).toFixed(1)} ${(tk.Hv*0.5).toFixed(1)})"><circle r="${(tk.Hv*0.19).toFixed(1)}" fill="rgba(20,14,8,.5)"/><g class="gspin">${gearPath(tk.Hv*0.13)}</g></g>`;
+    Audio_.motor(); }
   updateMachineBusy(); refreshHints(); updateControls();
 }
-function feedTick(dt){ let any=false; for(const tk of G.actives){ if(!tk.processing) continue; any=true; tk.procT+=dt;
+function feedTick(dt){ let any=false; for(const tk of G.actives.slice()){ if(!tk.processing) continue; any=true; tk.procT+=dt;
     const g=tk.proc.querySelector('.gspin'); if(g) g.setAttribute('transform',`rotate(${(tk.procT*0.36).toFixed(1)})`);
-    if(tk.procT>=tk.procDur){ tk.processing=false; tk.proc.innerHTML=''; Audio_.ripBurst(); completeTearInstant(tk); refreshHints(); updateControls(); } }
+    if(tk.procT>=tk.procDur){ tk.processing=false; tk.proc.innerHTML=''; Audio_.ripBurst(); completeTearInstant(tk);
+      if(tk.machineFed){ tk.machineFed=false; setTimeout(()=>{ if(!tk.placed && !tk.resolved) placeSuccess(tk); },120); }
+      refreshHints(); updateControls(); } }
   if(any) updateMachineBusy();
+  if(G.machineAuto) autoFeedStep();
 }
 
 /* ===== CLOCK ===== */
@@ -686,13 +697,15 @@ function updateClock(prog){ const mins=720+prog*420, hh=Math.floor(mins/60), mm=
     if(pr) pr.setAttribute('stroke-dashoffset',(276.46*(1-Math.min(1,prog))).toFixed(1)); } }
 /* ===== CONTROLS / HINTS / SCENES ===== */
 function updateControls(){ recvBtn.disabled = onFieldCount()>=fieldCap();
-  if(G.machine){ feedBtn.style.display='block'; const can = processingCount()<machineCap() && G.actives.some(a=>!a.torn&&!a.processing&&!a.resolved&&!a.placed); feedBtn.disabled=!can; }
-  else feedBtn.style.display='none'; }
-function refreshHints(){ if(!G.actives.length){ setHint(G.machine?'「受付」→「投入」で機械にちぎらせる':'「受付」を押す'); return; }
+  if(G.machine){ feedBtn.style.display='block'; feedBtn.disabled=false;
+    feedBtn.textContent = G.machineAuto?'機械 ON':'機械 OFF';
+    feedBtn.classList.toggle('on', G.machineAuto); }
+  else { feedBtn.style.display='none'; feedBtn.classList.remove('on'); } }
+function refreshHints(){ if(!G.actives.length){ setHint(G.machine?(G.machineAuto?'機械 ON：受付すれば自動でちぎって提出':'「機械」を押すと自動でちぎって提出'):'「受付」を押す'); return; }
   const fake=G.actives.some(a=>a.type==='fake'&&!a.resolved&&!a.placed);
   const torn=G.actives.some(a=>a.torn&&!a.placed&&!a.resolved);
   if(fake) setHint('色が濃く四隅が斜め＝偽造。ハンコを運んでタッチ'); else if(torn) setHint('ちぎったチケットを枠に置く');
-  else setHint(G.machine?'下になぞってちぎる／「投入」で機械へ':'下になぞってミシン目をちぎる'); }
+  else setHint(G.machine?(G.machineAuto?'機械 ON 稼働中（偽物は審美眼があれば自動でよける）':'下になぞってちぎる／「機械」ONで自動化'):'下になぞってミシン目をちぎる'); }
 function sizeZone(){ const sw=stage.clientWidth, tw=(fieldCap()>1? sw*0.62 : Math.min(sw*0.74,330));
   zone.style.width=Math.round(tw*0.70*1.05)+'px'; zone.style.height=Math.round(tw*0.50*1.1)+'px'; }
 function show(scene){ G.scene=scene; $('home').classList.toggle('on',scene==='home'); $('work').classList.toggle('on',scene==='work'); }
@@ -705,7 +718,7 @@ function shopEntries(){ const e=[];
   e.push({name:'株価下落', lv:G.stock, desc:`優待券の出現率 +2%（現在 ${Math.round(pPriority()*100)}%）`, cost:Math.round(150*Math.pow(1.6,G.stock)), owned:false, buy:()=>{G.stock++;}});
   e.push({name:'ベテラン', desc:'1枚で2枚ぶん処理（収支2倍／損も2倍）', cost:300, owned:G.vet, buy:()=>{G.vet=true;}});
   e.push({name:'接客態度', desc:'10%でチップがもらえる', cost:250, owned:G.service, buy:()=>{G.service=true;}});
-  e.push({name:'機械化', desc:'「投入」でちぎる機械（置くのは自分）', cost:700, owned:G.machine, buy:()=>{G.machine=true;}});
+  e.push({name:'機械化', desc:'ON/OFFで自動化。ONの間チケットを自動でちぎって提出', cost:700, owned:G.machine, buy:()=>{G.machine=true;}});
   if(G.moved){ if(G.motivation<7){ e.push({name:'モチベーション', lv:G.motivation, desc:`場に同時に出せる枚数 +1（現在 ${fieldCap()}枚）`, cost:Math.round(1200*Math.pow(1.7,G.motivation)), owned:false, buy:()=>{G.motivation++;}}); }
     else { e.push({name:'モチベーション', lv:G.motivation, desc:`場に同時に出せる枚数（上限 ${fieldCap()}枚）`, cost:0, owned:true, buy:()=>{}}); }
     e.push({name:'審美眼', desc:'束を一気にちぎる時、偽造券だけ自動でよけて本物だけちぎる', cost:900, owned:G.appraisal, buy:()=>{G.appraisal=true;}});
@@ -735,7 +748,7 @@ function renderHome(){
 }
 
 /* ===== FLOW ===== */
-function startShift(){ Audio_.ensure(); Audio_.resume(); G.shiftElapsed=0; G.shiftStartUnits=G.units; G.paused=false;
+function startShift(){ Audio_.ensure(); Audio_.resume(); G.shiftElapsed=0; G.shiftStartUnits=G.units; G.paused=false; G.machineAuto=false;
   G.actives.slice().forEach(removeTicket); show('work'); initClock(); sizeZone();
   machineBox.style.display=G.machine?'block':'none'; machineBox.classList.remove('busy');
   updateControls(); disarmLeave(); refreshHints(); updateClock(0); }
@@ -788,7 +801,7 @@ recvBtn.addEventListener('pointerdown', e=>{ if(recvBtn.disabled) return; recvHe
 recvBtn.addEventListener('pointerup', stopRecvHold);
 recvBtn.addEventListener('pointercancel', stopRecvHold);
 recvBtn.addEventListener('pointerleave', stopRecvHold);
-feedBtn.onclick=()=>{ if(!feedBtn.disabled) feedMachine(); };
+feedBtn.onclick=()=>{ toggleMachineAuto(); };
 leaveBtn.onclick=()=>{ if(leaveArmed){ disarmLeave(); endShift('early'); return; } leaveArmed=true; leaveBtn.textContent='本当に退勤？'; leaveTimer=setTimeout(disarmLeave,2600); };
 $('goWorkBtn').onclick=goWork;
 $('payBtn').onclick=()=>{ const pay=Math.min(G.units,G.owed); if(pay<=0) return; G.units-=pay; G.owed-=pay; if(G.owed<=0){ G.owed=0; G.arrears=0; } Audio_.register(); renderHome(); saveGame(); };
