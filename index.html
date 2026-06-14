@@ -780,10 +780,10 @@ let moveArmed=false, prestigeArmed=false, moveTimer=null, prestigeTimer=null, le
 function disarmLeave(){ leaveArmed=false; if(leaveTimer) clearTimeout(leaveTimer); leaveBtn.textContent='退勤'; }
 let recvHoldTimer=null, recvHeld=false;
 function recvCanSummon(){ return G.scene==='work' && !recvBtn.disabled && G.actives.length<fieldCap(); }
-function recvBurst(){ if(!recvCanSummon()){ stopRecvHold(); return; } summonTicket(); recvHoldTimer=setTimeout(recvBurst,160); }
+function recvBurst(){ if(!recvCanSummon()){ stopRecvHold(); return; } summonTicket(); recvHoldTimer=setTimeout(recvBurst,80); }
 function stopRecvHold(){ if(recvHoldTimer){ clearTimeout(recvHoldTimer); recvHoldTimer=null; } }
 recvBtn.addEventListener('pointerdown', e=>{ if(recvBtn.disabled) return; recvHeld=true; try{recvBtn.setPointerCapture(e.pointerId);}catch(_){}
-  if(recvCanSummon()) summonTicket(); recvHoldTimer=setTimeout(recvBurst,300); });
+  if(recvCanSummon()) summonTicket(); recvHoldTimer=setTimeout(recvBurst,150); });
 recvBtn.addEventListener('pointerup', stopRecvHold);
 recvBtn.addEventListener('pointercancel', stopRecvHold);
 recvBtn.addEventListener('pointerleave', stopRecvHold);
