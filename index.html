@@ -435,6 +435,7 @@ const G={ scene:'home', day:1, units:0, owed:0, arrears:0, prestige:0, xp:0,
   gearLevel:0, motorLevel:0, moved:false, pNotified:false, mNotified:false, shiftElapsed:0, shiftStartUnits:0, paused:false, actives:[] };
 function baseValue(){ return 1 + G.valueLevel + 3*G.prestige; }
 function fieldCap(){ return 1 + G.motivation; }
+function onFieldCount(){ return G.actives.filter(a=>!a.placed && !a.resolved).length; }
 function moveLevelReq(){ return 25 + 10*G.prestige; }
 function prestigeLevelReq(){ return 60 + 25*G.prestige; }
 function machineCap(){ return 1 + G.gearLevel; }
@@ -513,14 +514,14 @@ function makeTicketSVG(type){
 /* ===== SUMMON ===== */
 function rollType(){ const r=Math.random(), pf=pFake(), pp=pPriority(); return r<pf?'fake':(r<pf+pp?'priority':'regular'); }
 function slotPos(slot){ const cap=fieldCap(); if(cap===1) return {left:50,top:46};
-  const n=cap, c=(n-1)/2; const dx=2.2, dy=3.0;
+  const n=cap, c=(n-1)/2; const dx=1.2, dy=1.6;
   return {left:50+(slot-c)*dx, top:46+(slot-c)*dy}; }
 function applyTransform(tk){ tk.wrap.style.transform=`translate(-50%,-50%) translate(${tk.offset.x}px,${tk.offset.y}px)`; }
 let zCounter=0;
 function bringFront(tk){ tk.wrap.style.zIndex=String(++zCounter); }
 function summonTicket(){
-  if(G.actives.length>=fieldCap()) return;
-  const used=G.actives.map(a=>a.slot); let slot=0; while(used.includes(slot)) slot++;
+  if(onFieldCount()>=fieldCap()) return;
+  const used=G.actives.filter(a=>!a.placed && !a.resolved).map(a=>a.slot); let slot=0; while(used.includes(slot)) slot++;
   Audio_.ensure(); Audio_.resume(); Audio_.dispense();
   const type=rollType(); const m=makeTicketSVG(type);
   const wrap=document.createElement('div'); wrap.className='ticket'; wrap.appendChild(m.svg);
@@ -608,7 +609,7 @@ function autoPlace(tk){ const a=aimZone(tk); tk.offset=a; tk.wrap.style.transiti
   tk.wrap.style.transform=`translate(-50%,-50%) translate(${a.x}px,${a.y}px) scale(.9)`; setTimeout(()=>placeSuccess(tk),240); }
 function placeSuccess(tk){ if(tk.placed) return; tk.placed=true; const a=aimZone(tk);
   tk.wrap.style.transition='transform .22s ease-in, opacity .22s'; tk.wrap.style.transform=`translate(-50%,-50%) translate(${a.x}px,${a.y}px) scale(.16)`; tk.wrap.style.opacity='0';
-  resolvePlace(tk); setTimeout(()=>removeTicket(tk),220); }
+  resolvePlace(tk); updateControls(); refreshHints(); setTimeout(()=>removeTicket(tk),220); }
 function addUnits(n){ G.units+=n; G.xp+=n; }
 function resolvePlace(tk){ if(tk.resolved) return; tk.resolved=true; const m=tk.mult;
   if(tk.type==='fake'){ const loss=10*m; G.units=Math.max(0,G.units-loss); Audio_.buzz(); floatAt(tk,`−${loss}`,css('--red')); flashArrears(); }
@@ -632,7 +633,7 @@ function stampTicket(tk){ if(!tk||tk.resolved||tk.placed) return; tk.processing=
     ()=>{ go.setAttribute('transform',`rotate(-7 ${cx} ${cy})`); });
   if(!tk.resolved){ tk.resolved=true; const m=tk.mult;
     if(tk.type==='fake'){ const r=2*m; addUnits(r); floatAt(tk,`追放 +${r}`,css('--green')); }
-    else { const loss=5*m; G.units=Math.max(0,G.units-loss); Audio_.buzz(); floatAt(tk,`本物だった −${loss}`,css('--red')); flashArrears(); } syncTop(); }
+    else { const loss=5*m; G.units=Math.max(0,G.units-loss); Audio_.buzz(); floatAt(tk,`本物だった −${loss}`,css('--red')); flashArrears(); } syncTop(); updateControls(); refreshHints(); }
   setTimeout(()=>{ tk.wrap.style.transition='transform .3s ease-in, opacity .3s';
     tk.wrap.style.transform=`translate(-50%,-50%) translate(${tk.offset.x}px,${(tk.offset.y+120)}px) rotate(8deg)`; tk.wrap.style.opacity='0';
     setTimeout(()=>removeTicket(tk),300); },540);
@@ -684,7 +685,7 @@ function updateClock(prog){ const mins=720+prog*420, hh=Math.floor(mins/60), mm=
     if(m) m.setAttribute('transform',`rotate(${(((mins%60)/60)*360).toFixed(1)} 50 50)`);
     if(pr) pr.setAttribute('stroke-dashoffset',(276.46*(1-Math.min(1,prog))).toFixed(1)); } }
 /* ===== CONTROLS / HINTS / SCENES ===== */
-function updateControls(){ recvBtn.disabled = G.actives.length>=fieldCap();
+function updateControls(){ recvBtn.disabled = onFieldCount()>=fieldCap();
   if(G.machine){ feedBtn.style.display='block'; const can = processingCount()<machineCap() && G.actives.some(a=>!a.torn&&!a.processing&&!a.resolved&&!a.placed); feedBtn.disabled=!can; }
   else feedBtn.style.display='none'; }
 function refreshHints(){ if(!G.actives.length){ setHint(G.machine?'「受付」→「投入」で機械にちぎらせる':'「受付」を押す'); return; }
@@ -779,7 +780,7 @@ function closeOverlay(id){ $(id).classList.remove('on'); if(!$('settleOv').class
 let moveArmed=false, prestigeArmed=false, moveTimer=null, prestigeTimer=null, leaveArmed=false, leaveTimer=null, muted=false;
 function disarmLeave(){ leaveArmed=false; if(leaveTimer) clearTimeout(leaveTimer); leaveBtn.textContent='退勤'; }
 let recvHoldTimer=null, recvHeld=false;
-function recvCanSummon(){ return G.scene==='work' && !recvBtn.disabled && G.actives.length<fieldCap(); }
+function recvCanSummon(){ return G.scene==='work' && !recvBtn.disabled && onFieldCount()<fieldCap(); }
 function recvBurst(){ if(!recvCanSummon()){ stopRecvHold(); return; } summonTicket(); recvHoldTimer=setTimeout(recvBurst,50); }
 function stopRecvHold(){ if(recvHoldTimer){ clearTimeout(recvHoldTimer); recvHoldTimer=null; } }
 recvBtn.addEventListener('pointerdown', e=>{ if(recvBtn.disabled) return; recvHeld=true; try{recvBtn.setPointerCapture(e.pointerId);}catch(_){}
