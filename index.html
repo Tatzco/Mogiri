@@ -566,23 +566,29 @@ function completeTearInstant(tk){ if(tk.torn) return; tk.torn=true; for(const n 
 function tearGroup(){ // tickets that participate in a bundled tear
   return G.actives.filter(a=>!a.torn && !a.placed && !a.resolved && !a.processing && (!G.appraisal || a.type!=='fake')); }
 function attachPointer(tk){
-  const el=tk.wrap; let mode=null, anchorY=0, p0=0, startX=0, startY=0, moved=false, ox0=0, oy0=0, grp=null;
+  const el=tk.wrap; let mode=null, anchorY=0, p0=0, startX=0, startY=0, moved=false, ox0=0, oy0=0, grp=null, dragGrp=null, dragBase=null;
   el.addEventListener('pointerdown', e=>{ if(tk.resolved||tk.processing) return; Audio_.ensure(); Audio_.resume();
     try{el.setPointerCapture(e.pointerId);}catch(_){} startX=e.clientX; startY=e.clientY; moved=false; bringFront(tk);
     if(!tk.torn){ mode='tear'; anchorY=e.clientY; p0=tk.p;
       grp=(fieldCap()>1 && (!G.appraisal||tk.type!=='fake')) ? tearGroup() : [tk];
       if(!grp.includes(tk)) grp=[tk]; }
-    else if(!tk.placed){ mode='place'; ox0=tk.offset.x; oy0=tk.offset.y; el.style.transition='none'; el.style.cursor='grabbing'; } });
+    else if(!tk.placed){ mode='place'; ox0=tk.offset.x; oy0=tk.offset.y; el.style.transition='none'; el.style.cursor='grabbing';
+      /* ちぎれて未配置の全チケットを一緒にドラッグする */
+      dragGrp=tornPlaceable().slice(); if(!dragGrp.includes(tk)) dragGrp.push(tk);
+      dragBase=dragGrp.map(g=>({tk:g, x:g.offset.x, y:g.offset.y}));
+      dragGrp.forEach(g=>{ if(g!==tk){ g.wrap.style.transition='none'; } }); } });
   el.addEventListener('pointermove', e=>{ if(tk.resolved) return;
     if(mode==='tear'){ const dy=e.clientY-anchorY; let p=p0+dy/tk.span; const inten=Math.min(1.6,0.6+Math.abs(p-tk.p)*8);
       const list=grp||[tk]; for(const g of list){ if(!g.torn) setPeel(g,p,inten); }
       if(tk.p>=1){ mode=null; for(const g of list){ if(!g.torn) completeTear(g); } } }
     else if(mode==='place'){ const dx=e.clientX-startX, dy=e.clientY-startY; if(Math.abs(dx)>4||Math.abs(dy)>4) moved=true;
-      tk.offset.x=ox0+dx; tk.offset.y=oy0+dy; applyTransform(tk); zone.classList.toggle('hot', overZone(tk)); } });
+      if(dragBase){ for(const b of dragBase){ b.tk.offset.x=b.x+dx; b.tk.offset.y=b.y+dy; applyTransform(b.tk); } }
+      else { tk.offset.x=ox0+dx; tk.offset.y=oy0+dy; applyTransform(tk); }
+      zone.classList.toggle('hot', overZone(tk)); } });
   function up(){ if(tk.resolved) return;
     if(mode==='tear'){ if(tk.p>=0.95){ const list=grp||[tk]; for(const g of list){ if(!g.torn) completeTear(g); } } }
-    else if(mode==='place'){ el.style.cursor='grab'; if(overZone(tk)) placeBundle(tk); else if(!moved) autoPlaceBundle(tk); else returnBody(tk); zone.classList.remove('hot'); }
-    mode=null; }
+    else if(mode==='place'){ el.style.cursor='grab'; if(overZone(tk)) placeBundle(tk); else if(!moved) autoPlaceBundle(tk); else { if(dragGrp){ dragGrp.forEach(g=>returnBody(g)); } else returnBody(tk); } zone.classList.remove('hot'); }
+    mode=null; dragGrp=null; dragBase=null; }
   el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up);
 }
 function tornPlaceable(){ return G.actives.filter(a=>a.torn && !a.placed && !a.resolved && !a.processing); }
