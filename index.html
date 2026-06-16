@@ -50,6 +50,31 @@
     color:#10260f; background:linear-gradient(180deg,#73c895,var(--green));
     box-shadow:0 5px 0 var(--green-d), 0 9px 18px rgba(40,90,55,.22); letter-spacing:.06em;}
   .title-start:active{transform:translateY(4px); box-shadow:0 1px 0 var(--green-d), 0 3px 7px rgba(40,90,55,.18);}
+  /* ===== tutorial ===== */
+  #tutorial{position:fixed; inset:0; z-index:240; display:flex; align-items:center; justify-content:center;
+    background:#fff; padding:28px 22px; opacity:1; transition:opacity .4s ease;}
+  #tutorial.tut-enter{opacity:0;}
+  #tutorial.tut-hidden{display:none;}
+  .tut-inner{width:100%; max-width:420px; display:flex; flex-direction:column; align-items:stretch;}
+  .tut-pages{position:relative; min-height:300px;}
+  .tut-page{display:none; text-align:center; animation:tutFade .32s ease;}
+  .tut-page.on{display:block;}
+  @keyframes tutFade{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+  .tut-icon{font-size:52px; line-height:1; margin:8px 0 14px;}
+  .tut-page h2{font-family:var(--display); font-weight:800; font-size:24px; color:var(--ink); margin:0 0 14px;}
+  .tut-page p{font-size:14.5px; line-height:1.7; color:var(--ink2); margin:0 auto 12px; max-width:340px;}
+  .tut-page p b{color:var(--ink);}
+  .tut-dots{display:flex; gap:8px; justify-content:center; margin:18px 0 22px;}
+  .tut-dots i{width:8px; height:8px; border-radius:50%; background:var(--line); transition:background .2s, transform .2s;}
+  .tut-dots i.on{background:var(--brass-d); transform:scale(1.25);}
+  .tut-nav{display:flex; gap:10px;}
+  .tut-btn{flex:1; cursor:pointer; font-family:var(--display); font-weight:800; font-size:15px; padding:14px;
+    border-radius:13px; border:1px solid var(--green-d); color:#10260f;
+    background:linear-gradient(180deg,#73c895,var(--green)); box-shadow:0 4px 0 var(--green-d);}
+  .tut-btn:active{transform:translateY(2px); box-shadow:0 1px 0 var(--green-d);}
+  .tut-btn.ghost{border:1px solid var(--line); color:var(--ink2); background:#fff; box-shadow:0 4px 0 var(--line);}
+  .tut-btn.ghost:active{transform:translateY(2px); box-shadow:0 1px 0 var(--line);}
+  .tut-btn[disabled]{opacity:0; pointer-events:none;}
   /* アイリスイン用オーバーレイ */
   #home{overflow-y:auto; -webkit-overflow-scrolling:touch;}
   #home .pad{padding:16px 16px 28px;}
@@ -165,6 +190,32 @@
     box-shadow:0 5px 0 var(--brass-d), 0 9px 15px rgba(120,82,20,.32);}
   .recv-btn:disabled{opacity:.5; cursor:default; box-shadow:none; filter:grayscale(.35);}
   .recv-btn:not(:disabled):active{transform:translateY(4px); box-shadow:0 1px 0 var(--brass-d);}
+  /* ===== skill FAB + circular reveal ===== */
+  .shop-fab{position:absolute; left:14px; bottom:14px; width:54px; height:54px; border-radius:50%; z-index:7; display:none;
+    cursor:pointer; border:1px solid var(--line); padding:0;
+    flex-direction:column; align-items:center; justify-content:center; gap:5px;
+    background:#fff;
+    box-shadow:0 4px 0 var(--line), 0 9px 15px rgba(50,32,14,.22);}
+  .shop-fab.on{display:flex;}
+  .shop-fab span{display:block; width:22px; height:2.6px; border-radius:2px; background:var(--ink);}
+  .shop-fab:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line);}
+  .shop-ov{padding:0; background:transparent; backdrop-filter:none; align-items:stretch; justify-content:stretch;}
+  .shop-card{position:absolute; left:0; top:0; width:100%; max-width:none; height:100%; max-height:none;
+    border:0; border-radius:0; box-shadow:none; padding:54px 22px 22px;
+    background:linear-gradient(180deg,var(--paper),var(--paper2));
+    overflow-y:auto;
+    clip-path:circle(30px at var(--cx,53px) var(--cy,calc(100% - 76px)));
+    transition:clip-path .46s cubic-bezier(.33,0,.2,1);}
+  .shop-ov.opening .shop-card{clip-path:circle(220% at var(--cx,53px) var(--cy,calc(100% - 76px)));}
+  .shop-close-fab{position:fixed; left:var(--cx,53px); top:var(--cyt,calc(100% - 76px)); transform:translate(-50%,-50%); width:54px; height:54px; border-radius:50%; z-index:62;
+    cursor:pointer; border:1px solid var(--line); padding:0;
+    display:grid; place-items:center;
+    background:#fff;
+    box-shadow:0 4px 0 var(--line), 0 9px 15px rgba(50,32,14,.22);}
+  .shop-close-fab span{position:absolute; width:22px; height:2.6px; border-radius:2px; background:var(--ink);}
+  .shop-close-fab span:nth-child(1){transform:rotate(45deg);}
+  .shop-close-fab span:nth-child(2){transform:rotate(-45deg);}
+  .shop-close-fab:active{transform:translate(-50%,-50%) translateY(3px); box-shadow:0 1px 0 var(--line);}
   .overlay{position:fixed; inset:0; z-index:60; display:none; align-items:center; justify-content:center;
     padding:20px; background:rgba(40,28,14,.5); backdrop-filter:blur(3px);}
   .overlay.on{display:flex;}
@@ -197,6 +248,47 @@
   <div class="title-logo">M<span class="logo-accent">o</span>giri</div>
   <button class="title-start" id="titleStartBtn">スタート</button>
 </div>
+<div id="tutorial" class="tut-hidden">
+  <div class="tut-inner">
+    <div class="tut-pages">
+      <div class="tut-page on" data-page="0">
+        <div class="tut-icon">🎫</div>
+        <h2>もぎりの仕事</h2>
+        <p>「受付」でチケットを出し、指で<b>下へなぞって</b>ちぎり、右上の枠に<b>置く</b>とユニット（お金）が入ります。</p>
+        <p>たまに<b>偽造券</b>が混じります。これは置かず、<b>ハンコでタッチ</b>して追放します。本物を追放したり偽物を置くと減点です。</p>
+      </div>
+      <div class="tut-page" data-page="1">
+        <div class="tut-icon">🏠</div>
+        <h2>ユニットの使いみち</h2>
+        <p>働いて貯めたユニットは、家計の<b>家賃などの支払い</b>に使います。</p>
+        <p>出勤中は左下のボタンから<b>スキル</b>を買って、単価アップや効率化など自分を強化できます。</p>
+      </div>
+      <div class="tut-page" data-page="2">
+        <div class="tut-icon">⚠️</div>
+        <h2>家賃をためないで</h2>
+        <p>帰宅するたびに家賃などの請求がたまります。ユニットがあればいつでも支払えます。</p>
+        <p><b>7日分ためてしまうと督促状が届き、ゲームオーバー</b>です。</p>
+      </div>
+      <div class="tut-page" data-page="3">
+        <div class="tut-icon">🏆</div>
+        <h2>アチーブメント</h2>
+        <p>特定の<b>特殊な条件</b>を満たすと、アチーブメントを獲得できます。</p>
+        <p>どんな条件で手に入るかは、遊びながら探してみてください。</p>
+      </div>
+      <div class="tut-page" data-page="4">
+        <div class="tut-icon">❓</div>
+        <h2>ルールはいつでも</h2>
+        <p>遊び方は、画面<b>右上の「？」マーク</b>からいつでも確認できます。</p>
+        <p>それでは、はじめましょう。</p>
+      </div>
+    </div>
+    <div class="tut-dots" id="tutDots"></div>
+    <div class="tut-nav">
+      <button class="tut-btn ghost" id="tutPrev">もどる</button>
+      <button class="tut-btn" id="tutNext">つぎへ</button>
+    </div>
+  </div>
+</div>
 <div id="app">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="goHalo" x="-35%" y="-35%" width="170%" height="170%"><feDropShadow dx="0" dy="0" stdDeviation="1.5" flood-color="#3a0805" flood-opacity="0.55"/></filter></defs></svg>
   <div id="topbar">
@@ -220,12 +312,6 @@
       </div>
       <button class="pay-btn" id="payBtn">未払いを支払う</button>
       <button class="cta" id="goWorkBtn" style="margin-top:20px;">出勤する</button>
-      <div class="shop-h" style="margin-top:24px;">スキル</div>
-      <div id="shop"></div>
-      <div class="milestones">
-        <button class="ms-btn move" id="moveBtn" style="display:none">引越し（Lv.20）</button>
-        <button class="ms-btn prestige" id="prestigeBtn" style="display:none">転職（プレステージ）</button>
-      </div>
     </div>
   </section>
 
@@ -259,6 +345,7 @@
       </div>
       <button class="recv-btn" id="recvBtn">受付</button>
       <div class="hint-tip" id="hintTip"></div>
+      <button class="shop-fab" id="wkShopFab" aria-label="スキル"><span></span><span></span><span></span></button>
     </div>
     <div class="controls">
       <button class="auto-btn" id="feedBtn" style="display:none">投入</button>
@@ -284,6 +371,17 @@
   <div class="btnrow"><button class="btn" id="notice-ok">OK</button></div>
 </div></div>
 
+<div class="overlay shop-ov" id="shopOv"><div class="card shop-card">
+  <h2>スキル</h2>
+  <p class="lead" style="margin-bottom:10px;">所持ユニット <b id="shop-units">0 U</b>　— 選んでいる間タイマーは止まります。</p>
+  <div id="shop" style="max-height:46vh; overflow-y:auto; margin-bottom:14px;"></div>
+  <div class="milestones" id="shop-milestones" style="margin:0 0 12px;">
+    <button class="ms-btn move" id="moveBtn" style="display:none">引越し（Lv.20）</button>
+    <button class="ms-btn prestige" id="prestigeBtn" style="display:none">転職（プレステージ）</button>
+  </div>
+  <button class="shop-close-fab" id="shop-close" aria-label="閉じる"><span></span><span></span></button>
+</div></div>
+
 <div class="overlay gameover" id="overOv"><div class="card">
   <div class="dunning"><div class="stamp" id="over-stamp">未払い</div><h4 id="over-head">督 促 状</h4><p id="over-letter" style="white-space:pre-line;"></p></div>
   <div id="over-jinx-banner" style="display:none; margin:0 0 14px; padding:12px 14px; border:2px solid #8a5a8f; border-radius:10px; background:linear-gradient(180deg,#f3eaf5,#e8d4ed); text-align:center;">
@@ -303,23 +401,19 @@
   <p class="lead">チケットをさばいて家賃をかせぐ仕事。</p>
   <dl>
     <dt>① 出す → ちぎる → 置く</dt>
-    <dd>「受付」でチケットを出し、指で<b>下へなぞって</b>ちぎり、右上の枠に<b>置く</b>とお金が入る。これが基本の流れ。</dd>
+    <dd>「受付」で出し、指で<b>下へなぞって</b>ちぎり、右上の枠に<b>置く</b>とユニットが入る。</dd>
 
-    <dt>② 偽物に注意</dt>
-    <dd>たまに<b>偽造券</b>（色が濃く四隅が斜め）が混じる。これは置かずに、<b>ハンコを運んで上でタッチ</b>して追放する。置くと減点、本物を追放しても減点。</dd>
+    <dt>② 偽物はハンコで追放</dt>
+    <dd>たまに混じる<b>偽造券</b>は置かず<b>ハンコでタッチ</b>。偽物を置く／本物を追放すると減点。</dd>
 
-    <dt>③ 家賃をはらう</dt>
-    <dd>帰宅すると家賃などの請求がたまる。家でいつでも「支払う」。<b>7日ためると督促状でゲームオーバー</b>。</dd>
+    <dt>③ ユニットの使いみち</dt>
+    <dd>貯めたユニットで<b>家賃を支払い</b>、出勤中は左下から<b>スキル</b>を買って強化できる。</dd>
 
-    <dt>④ スキルで強くなる</dt>
-    <dd>かせいだお金でスキルを買える。働くとレベルが上がり、<b>Lv.20で引越し</b>・<b>Lv.25で転職</b>が解禁。</dd>
+    <dt>④ 家賃をためない</dt>
+    <dd>帰宅ごとに請求がたまる。<b>7日ためると督促状でゲームオーバー</b>。</dd>
 
-    <dt>⑤ 引越し後のスキル</dt>
-    <dd>
-      ・<b>モチベーション</b>：チケットを同時に出せる枚数が増え、重ねて一気にちぎれる。<br>
-      ・<b>審美眼</b>：一気にちぎる時、偽物だけ自動でよけてくれる。<br>
-      ・<b>機械化</b>：「機械」ボタンON/OFFで自動化。ONの間は受付したチケットを機械が自動でちぎって提出（偽物は審美眼があれば自動でよける）。
-    </dd>
+    <dt>⑤ アチーブメント</dt>
+    <dd>特殊な条件を満たすと獲得。条件は遊びながら探す。</dd>
   </dl>
   <div class="btnrow" style="margin-top:16px"><button class="btn" id="help-close">閉じる</button></div>
 </div></div>
@@ -350,7 +444,11 @@
     </div>
     <div style="font-size:11px; color:var(--muted); font-family:var(--mono);" id="modeDesc">社畜モードに切替えると制限なく遊べる</div>
   </div>
-  <button class="reset-btn" id="optReset">セーブを初期化（最初から）</button>
+  <div id="optAchWrap" style="display:none; margin:16px 0 0;">
+    <div style="font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:10px;">アチーブメント</div>
+    <div id="optAchList" style="display:flex; flex-direction:column; gap:8px;"></div>
+  </div>
+  <button class="reset-btn" id="optReset" style="margin-top:40px;">セーブを初期化（最初から）</button>
   <div class="btnrow" style="margin-top:16px"><button class="btn" id="optClose">閉じる</button></div>
 </div></div>
 
@@ -464,7 +562,7 @@ const MODE_KEY='nightReception.mode', ACH_KEY='nightReception.ach';
 const ACH_DEFS={
   hyperinflation:{ title:'ハイパーインフレ', letter:'国が悪いよね。' },
   bankruptcy:{ title:'倒産', letter:'失業保険は入っていたか？！' },
-  restructuring:{ title:'リストラ', letter:'YOU FIRED!\n機械の方が君より優秀だって' },
+  restructuring:{ title:'リストラ', letter:"YOU'RE FIRED!\n機械の方が君より優秀だって" },
   eviction:{ title:'GET OUT!', letter:'GET OUT!' },
   jinx:{ title:'疫病神', letter:'すべての破滅を呼び込んだ。あなたは正真正銘の疫病神だ。' }
 };
@@ -708,7 +806,7 @@ function refreshHints(){ if(!G.actives.length){ setHint(G.machine?(G.machineAuto
   else setHint(G.machine?(G.machineAuto?'機械 ON 稼働中（偽物は審美眼があれば自動でよける）':'下になぞってちぎる／「機械」ONで自動化'):'下になぞってミシン目をちぎる'); }
 function sizeZone(){ const sw=stage.clientWidth, tw=(fieldCap()>1? sw*0.62 : Math.min(sw*0.74,330));
   zone.style.width=Math.round(tw*0.70*1.05)+'px'; zone.style.height=Math.round(tw*0.50*1.1)+'px'; }
-function show(scene){ G.scene=scene; $('home').classList.toggle('on',scene==='home'); $('work').classList.toggle('on',scene==='work'); }
+function show(scene){ G.scene=scene; $('home').classList.toggle('on',scene==='home'); $('work').classList.toggle('on',scene==='work'); $('wkShopFab').classList.toggle('on',scene==='work'); }
 function flashArrears(){ const c=$('tb-arrears'); c.classList.add('hot'); setTimeout(()=>c.classList.remove('hot'),500); }
 function syncTop(){ $('tb-units').textContent=Math.floor(G.units); $('tb-day').textContent=G.day; $('tb-arr').textContent=G.arrears; $('tb-lvl').textContent=level(); const wu=$('wkUnits'); if(wu) wu.textContent=Math.floor(G.units); }
 
@@ -726,12 +824,16 @@ function shopEntries(){ const e=[];
       e.push({name:'モーター強化', lv:G.motorLevel, desc:`ちぎる速度UP（現在 ${(tearMs()/1000).toFixed(2)}秒）`, cost:Math.round(400*Math.pow(1.8,G.motorLevel)), owned:false, buy:()=>{G.motorLevel++;}}); } }
   return e; }
 function renderHome(){
-  moveArmed=false; prestigeArmed=false; if(moveTimer) clearTimeout(moveTimer); if(prestigeTimer) clearTimeout(prestigeTimer);
   $('fin-units').textContent=Math.floor(G.units)+' U';
   $('fin-owed').textContent=Math.floor(G.owed)+' U'; $('fin-owed').className='v '+(G.owed>0?'bad':'');
   const li=levelInfo(); $('fin-lvl').textContent='Lv.'+li.level; $('fin-xp').textContent=li.cur+' / '+li.need;
   $('fin-lvbar').style.width=Math.min(100,(li.cur/li.need*100))+'%';
   const payBtn=$('payBtn'); payBtn.disabled=!(G.owed>0 && G.units>0); payBtn.textContent= G.owed>0?`未払い ${Math.floor(G.owed)} U を支払う`:'未払いはありません';
+  syncTop();
+}
+function renderShop(){
+  moveArmed=false; prestigeArmed=false; if(moveTimer) clearTimeout(moveTimer); if(prestigeTimer) clearTimeout(prestigeTimer);
+  $('shop-units').textContent=Math.floor(G.units)+' U';
   const shop=$('shop'); shop.innerHTML='';
   shopEntries().forEach(sk=>{ const row=document.createElement('div'); row.className='skill';
     const lvTxt=(sk.lv!==undefined)?`<span class="lv">Lv.${sk.lv}</span>`:'';
@@ -739,12 +841,11 @@ function renderHome(){
     const b=document.createElement('button'); const owned=sk.owned;
     if(owned){ b.className='buy owned'; b.textContent='取得済'; b.disabled=true; }
     else { b.className='buy'; b.textContent=sk.cost+' U'; b.disabled=G.units<sk.cost;
-      b.onclick=()=>{ if(G.units<sk.cost) return; G.units-=sk.cost; sk.buy(); Audio_.ensure(); Audio_.coin(); renderHome(); saveGame(); checkLimitDoom(); }; }
+      b.onclick=()=>{ if(G.units<sk.cost) return; G.units-=sk.cost; sk.buy(); Audio_.ensure(); Audio_.coin(); renderShop(); renderHome(); saveGame(); checkLimitDoom(); }; }
     row.appendChild(b); shop.appendChild(row); });
-  const mv=$('moveBtn'), pr=$('prestigeBtn'), lvl=li.level;
+  const mv=$('moveBtn'), pr=$('prestigeBtn'), lvl=levelInfo().level;
   if(lvl>=moveLevelReq() && !G.moved){ mv.style.display='block'; mv.textContent='引越しする（家賃UP・解禁）'; } else mv.style.display='none';
   if(lvl>=prestigeLevelReq()){ pr.style.display='block'; pr.textContent='転職する（単価+3・スキル一部保持）'; } else pr.style.display='none';
-  syncTop();
 }
 
 /* ===== FLOW ===== */
@@ -760,8 +861,8 @@ function endShift(reason){ if(G.scene!=='work') return; G.actives.slice().forEac
   G.day+=1; syncTop(); saveGame(); openOverlay('settleOv'); }
 function afterSettle(){ closeOverlay('settleOv'); show('home'); renderHome(); checkUnlockNotices(); }
 function checkUnlockNotices(){ const q=[];
-  if(!G.pNotified && level()>=prestigeLevelReq()){ G.pNotified=true; q.push({title:'転職できるようになりました',body:`ホーム画面から「転職」が選べます。チケット単価が永続で +3 され、レベル・引越し・モチベーションは引き継いだまま、その他のスキルだけリセットされます。`}); }
-  if(!G.mNotified && level()>=moveLevelReq() && !G.moved){ G.mNotified=true; q.push({title:'引越しできるようになりました',body:`ホーム画面から「引越し」が選べます。家賃は上がりますが、モチベーション（場の枚数を増やす）や機械強化が解禁されます。`}); }
+  if(!G.pNotified && level()>=prestigeLevelReq()){ G.pNotified=true; q.push({title:'転職できるようになりました',body:`出勤中の「スキル」画面から「転職」が選べます。チケット単価が永続で +3 され、レベル・引越し・モチベーションは引き継いだまま、その他のスキルだけリセットされます。`}); }
+  if(!G.mNotified && level()>=moveLevelReq() && !G.moved){ G.mNotified=true; q.push({title:'引越しできるようになりました',body:`出勤中の「スキル」画面から「引越し」が選べます。家賃は上がりますが、モチベーション（場の枚数を増やす）や機械強化が解禁されます。`}); }
   if(q.length){ saveGame(); showNoticeQueue(q); } }
 let noticeQueue=[];
 function showNoticeQueue(q){ noticeQueue=q.slice(); popNotice(); }
@@ -782,12 +883,12 @@ function doGameOver(reason){ G.scene='gameover'; clearSave(); Audio_.gameover();
   openOverlay('overOv'); }
 function doPrestige(){ G.prestige++; G.owed=0; G.arrears=0; G.day=1;
   G.valueLevel=0; G.stock=0; G.vet=false; G.machine=false; G.service=false; G.gearLevel=0; G.motorLevel=0;
-  Audio_.chime(); renderHome(); saveGame(); }
+  Audio_.chime(); renderShop(); renderHome(); saveGame(); }
 function resetGame(){ clearSave(); closeOverlay('overOv'); closeOverlay('optsOv'); Object.assign(G,{ scene:'home', day:1, units:0, owed:0, arrears:0, prestige:0, xp:0,
   valueLevel:0, stock:0, vet:false, machine:false, service:false, motivation:0, appraisal:false, gearLevel:0, motorLevel:0, moved:false, pNotified:false, mNotified:false,
   shiftElapsed:0, shiftStartUnits:0, paused:false, actives:[] }); renderHome(); show('home'); showTitleScreen(); }
 function openOverlay(id){ $(id).classList.add('on'); G.paused=true; }
-function closeOverlay(id){ $(id).classList.remove('on'); if(!$('settleOv').classList.contains('on')&&!$('overOv').classList.contains('on')&&!$('helpOv').classList.contains('on')&&!$('optsOv').classList.contains('on')&&!$('noticeOv').classList.contains('on')) G.paused=false; }
+function closeOverlay(id){ $(id).classList.remove('on'); if(!$('settleOv').classList.contains('on')&&!$('overOv').classList.contains('on')&&!$('helpOv').classList.contains('on')&&!$('optsOv').classList.contains('on')&&!$('noticeOv').classList.contains('on')&&!$('shopOv').classList.contains('on')) G.paused=false; }
 
 /* ===== EVENTS ===== */
 let moveArmed=false, prestigeArmed=false, moveTimer=null, prestigeTimer=null, leaveArmed=false, leaveTimer=null, muted=false;
@@ -805,8 +906,8 @@ feedBtn.onclick=()=>{ toggleMachineAuto(); };
 leaveBtn.onclick=()=>{ if(leaveArmed){ disarmLeave(); endShift('early'); return; } leaveArmed=true; leaveBtn.textContent='本当に退勤？'; leaveTimer=setTimeout(disarmLeave,2600); };
 $('goWorkBtn').onclick=goWork;
 $('payBtn').onclick=()=>{ const pay=Math.min(G.units,G.owed); if(pay<=0) return; G.units-=pay; G.owed-=pay; if(G.owed<=0){ G.owed=0; G.arrears=0; } Audio_.register(); renderHome(); saveGame(); };
-$('moveBtn').onclick=()=>{ if(level()<moveLevelReq()||G.moved) return; if(moveArmed){ clearTimeout(moveTimer); moveArmed=false; G.moved=true; Audio_.chime(); renderHome(); saveGame(); return; }
-  moveArmed=true; $('moveBtn').textContent='本当に引越す？（家賃UP）'; moveTimer=setTimeout(()=>{ moveArmed=false; renderHome(); },2600); };
+$('moveBtn').onclick=()=>{ if(level()<moveLevelReq()||G.moved) return; if(moveArmed){ clearTimeout(moveTimer); moveArmed=false; G.moved=true; Audio_.chime(); renderShop(); renderHome(); saveGame(); return; }
+  moveArmed=true; $('moveBtn').textContent='本当に引越す？（家賃UP）'; moveTimer=setTimeout(()=>{ moveArmed=false; renderShop(); },2600); };
 let resetArmed=false, resetTimer=null;
 function updateModeToggleUI(){
   const tog=$('modeToggle'), slider=$('modeSlider'), knob=$('modeKnob');
@@ -828,10 +929,38 @@ function updateModeToggleUI(){
     if(md) md.textContent='リミットモードに切り替えるとアチーブメントが解禁される';
   }
 }
+const ACH_ICONS={ hyperinflation:'💸', bankruptcy:'📉', restructuring:'🤖', eviction:'🚪', jinx:'☠️' };
+function renderAchievements(){
+  const wrap=$('optAchWrap'), list=$('optAchList');
+  if(!wrap||!list) return;
+  const ids=Object.keys(ACH_DEFS).filter(id=>achieved[id]);
+  if(ids.length===0){ wrap.style.display='none'; list.innerHTML=''; return; }
+  wrap.style.display='block';
+  list.innerHTML='';
+  ids.forEach(id=>{
+    const def=ACH_DEFS[id];
+    const card=document.createElement('div');
+    card.style.cssText='background:var(--paper); border:1px solid var(--line); border-radius:11px; padding:11px 13px; display:flex; gap:11px; align-items:flex-start;';
+    const badge=document.createElement('div');
+    badge.style.cssText='flex-shrink:0; width:30px; height:30px; border-radius:8px; background:linear-gradient(180deg,var(--brass-l),var(--brass-d)); font-size:16px; display:grid; place-items:center;';
+    badge.textContent=ACH_ICONS[id]||'★';
+    const txt=document.createElement('div');
+    const t=document.createElement('div');
+    t.style.cssText='font-size:14px; font-weight:700; color:var(--ink);';
+    t.textContent=def.title;
+    const d=document.createElement('div');
+    d.style.cssText='font-size:12px; color:var(--ink2); line-height:1.4; margin-top:2px; white-space:pre-line;';
+    d.textContent=def.letter;
+    txt.appendChild(t); txt.appendChild(d);
+    card.appendChild(badge); card.appendChild(txt);
+    list.appendChild(card);
+  });
+}
 $('gearBtn').onclick=()=>{ resetArmed=false; if(resetTimer) clearTimeout(resetTimer);
   $('optSave').textContent=storageOK?'オン':'保存不可'; $('optReset').textContent='セーブを初期化（最初から）';
   const sl=$('optVol'); sl.value=String(volPct); $('optVolVal').textContent=String(volPct);
   updateModeToggleUI();
+  renderAchievements();
   openOverlay('optsOv'); };
 $('optClose').onclick=()=>closeOverlay('optsOv');
 $('optReset').onclick=()=>{ if(resetArmed){ if(resetTimer) clearTimeout(resetTimer); resetArmed=false; closeOverlay('optsOv'); clearSave(); resetGame(); return; }
@@ -842,9 +971,14 @@ $('modeToggle').onclick=()=>{
   updateModeToggleUI();
 };
 $('prestigeBtn').onclick=()=>{ if(level()<prestigeLevelReq()) return; if(prestigeArmed){ clearTimeout(prestigeTimer); prestigeArmed=false; doPrestige(); return; }
-  prestigeArmed=true; $('prestigeBtn').textContent='本当に転職？（一部スキルリセット）'; prestigeTimer=setTimeout(()=>{ prestigeArmed=false; renderHome(); },2600); };
+  prestigeArmed=true; $('prestigeBtn').textContent='本当に転職？（一部スキルリセット）'; prestigeTimer=setTimeout(()=>{ prestigeArmed=false; renderShop(); },2600); };
 $('set-ok').onclick=afterSettle; $('over-restart').onclick=resetGame;
 $('notice-ok').onclick=()=>{ closeOverlay('noticeOv'); if(noticeQueue.length) popNotice(); };
+$('wkShopFab').onclick=()=>{ if(G.scene!=='work') return; renderShop(); const ov=$('shopOv'); const card=ov.querySelector('.shop-card');
+  const r=$('wkShopFab').getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2;
+  card.style.setProperty('--cx', cx+'px'); card.style.setProperty('--cy', cy+'px'); card.style.setProperty('--cyt', cy+'px');
+  ov.classList.add('on'); G.paused=true; requestAnimationFrame(()=>requestAnimationFrame(()=>ov.classList.add('opening'))); };
+$('shop-close').onclick=()=>{ const ov=$('shopOv'); ov.classList.remove('opening'); setTimeout(()=>{ ov.classList.remove('on'); if(!$('settleOv').classList.contains('on')&&!$('overOv').classList.contains('on')&&!$('helpOv').classList.contains('on')&&!$('optsOv').classList.contains('on')&&!$('noticeOv').classList.contains('on')) G.paused=false; checkUnlockNotices(); },420); };
 $('helpBtn').onclick=()=>openOverlay('helpOv'); $('help-close').onclick=()=>closeOverlay('helpOv');
 $('muteBtn').onclick=()=>{ muted=!muted; Audio_.ensure(); Audio_.setMuted(muted); $('muteBtn').textContent=muted?'🔇':'🔊'; };
 let volPct=60; try{ const sv=localStorage.getItem('nightReception.vol'); if(sv!==null) volPct=Math.max(0,Math.min(100,parseInt(sv,10)||0)); }catch(_){}
@@ -903,9 +1037,25 @@ function hideTitleWithIrisIn(cb){
   requestAnimationFrame(frame);
 }
 
+const TUT_PAGES=5;
+let tutPage=0;
+function renderTutDots(){ const d=$('tutDots'); d.innerHTML=''; for(let i=0;i<TUT_PAGES;i++){ const dot=document.createElement('i'); if(i===tutPage) dot.classList.add('on'); d.appendChild(dot); } }
+function showTutPage(n){ tutPage=Math.max(0,Math.min(TUT_PAGES-1,n));
+  document.querySelectorAll('.tut-page').forEach(p=>p.classList.toggle('on', +p.dataset.page===tutPage));
+  $('tutPrev').disabled = tutPage===0;
+  $('tutNext').textContent = tutPage===TUT_PAGES-1 ? 'はじめる' : 'つぎへ';
+  renderTutDots(); }
+function startTutorial(){ tutPage=0; showTutPage(0); const t=$('tutorial');
+  t.classList.add('tut-enter');
+  setTimeout(()=>{ t.classList.remove('tut-hidden'); requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.remove('tut-enter'))); }, 450); }
+function finishTutorial(){ $('tutorial').classList.add('tut-hidden'); hideTitleWithIrisIn(null); }
+$('tutPrev').onclick=()=>{ Audio_.ensure(); showTutPage(tutPage-1); };
+$('tutNext').onclick=()=>{ Audio_.ensure(); if(tutPage>=TUT_PAGES-1){ finishTutorial(); } else { showTutPage(tutPage+1); } };
+
 document.getElementById('titleStartBtn').addEventListener('click', ()=>{
   Audio_.ensure(); Audio_.resume();
-  hideTitleWithIrisIn(null);
+  const fresh = !(storageOK && localStorage.getItem(STORE_KEY));
+  if(fresh){ startTutorial(); } else { hideTitleWithIrisIn(null); }
 });
 
 /* 初期化：ホームは最初からON（タイトルの裏に待機）、タイトルを前面に表示 */
