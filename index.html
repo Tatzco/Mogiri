@@ -76,7 +76,7 @@
   .tut-btn.ghost:active{transform:translateY(2px); box-shadow:0 1px 0 var(--line);}
   .tut-btn[disabled]{opacity:0; pointer-events:none;}
   /* アイリスイン用オーバーレイ */
-  #home{overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  #home{overflow-y:auto; padding-bottom:120px; -webkit-overflow-scrolling:touch;}
   #home .pad{padding:16px 16px 28px;}
   .home-hero{margin:4px 2px 16px;}
   .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--brass-d);}
@@ -200,7 +200,7 @@
   .shop-fab span{display:block; width:22px; height:2.6px; border-radius:2px; background:var(--ink);}
   .shop-fab:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line);}
   .shop-ov{padding:0; background:transparent; backdrop-filter:none; align-items:stretch; justify-content:stretch;}
-  .shop-card{position:absolute; left:0; top:0; width:100%; max-width:none; height:100%; max-height:none;
+  .shop-card{position:absolute; left:0; top:0; width:100%; max-width:none; height:100vh; max-height:none; padding-bottom:140px;
     border:0; border-radius:0; box-shadow:none; padding:54px 22px 22px;
     background:linear-gradient(180deg,var(--paper),var(--paper2));
     overflow-y:auto;
@@ -374,7 +374,7 @@
 <div class="overlay shop-ov" id="shopOv"><div class="card shop-card">
   <h2>スキル</h2>
   <p class="lead" style="margin-bottom:10px;">所持ユニット <b id="shop-units">0 U</b>　— 選んでいる間タイマーは止まります。</p>
-  <div id="shop" style="max-height:46vh; overflow-y:auto; margin-bottom:14px;"></div>
+  <div id="shop" style="height:calc(100vh - 260px); min-height:320px; overflow-y:auto; margin-bottom:14px;"></div>
   <div class="milestones" id="shop-milestones" style="margin:0 0 12px;">
     <button class="ms-btn move" id="moveBtn" style="display:none">引越し（Lv.20）</button>
     <button class="ms-btn prestige" id="prestigeBtn" style="display:none">転職（プレステージ）</button>
@@ -816,7 +816,7 @@ function shopEntries(){ const e=[];
   e.push({name:'株価下落', lv:G.stock, desc:`優待券の出現率 +2%（現在 ${Math.round(pPriority()*100)}%）`, cost:Math.round(150*Math.pow(1.6,G.stock)), owned:false, buy:()=>{G.stock++;}});
   e.push({name:'ベテラン', desc:'1枚で2枚ぶん処理（収支2倍／損も2倍）', cost:300, owned:G.vet, buy:()=>{G.vet=true;}});
   e.push({name:'接客態度', desc:'10%でチップがもらえる', cost:250, owned:G.service, buy:()=>{G.service=true;}});
-  e.push({name:'機械化', desc:'ON/OFFで自動化。ONの間チケットを自動でちぎって提出', cost:700, owned:G.machine, buy:()=>{G.machine=true;}});
+  e.push({name:'機械化', desc:'ON/OFFで自動化。ONの間チケットを自動でちぎって提出', cost:700, owned:G.machine, buy:()=>{G.machine=true; machineBox.style.display='block';}});
   if(G.moved){ if(G.motivation<7){ e.push({name:'モチベーション', lv:G.motivation, desc:`場に同時に出せる枚数 +1（現在 ${fieldCap()}枚）`, cost:Math.round(1200*Math.pow(1.7,G.motivation)), owned:false, buy:()=>{G.motivation++;}}); }
     else { e.push({name:'モチベーション', lv:G.motivation, desc:`場に同時に出せる枚数（上限 ${fieldCap()}枚）`, cost:0, owned:true, buy:()=>{}}); }
     e.push({name:'審美眼', desc:'束を一気にちぎる時、偽造券だけ自動でよけて本物だけちぎる', cost:900, owned:G.appraisal, buy:()=>{G.appraisal=true;}});
@@ -861,8 +861,8 @@ function endShift(reason){ if(G.scene!=='work') return; G.actives.slice().forEac
   G.day+=1; syncTop(); saveGame(); openOverlay('settleOv'); }
 function afterSettle(){ closeOverlay('settleOv'); show('home'); renderHome(); checkUnlockNotices(); }
 function checkUnlockNotices(){ const q=[];
-  if(!G.pNotified && level()>=prestigeLevelReq()){ G.pNotified=true; q.push({title:'転職できるようになりました',body:`出勤中の「スキル」画面から「転職」が選べます。チケット単価が永続で +3 され、レベル・引越し・モチベーションは引き継いだまま、その他のスキルだけリセットされます。`}); }
-  if(!G.mNotified && level()>=moveLevelReq() && !G.moved){ G.mNotified=true; q.push({title:'引越しできるようになりました',body:`出勤中の「スキル」画面から「引越し」が選べます。家賃は上がりますが、モチベーション（場の枚数を増やす）や機械強化が解禁されます。`}); }
+  if(!G.pNotified && level()>=prestigeLevelReq()){ G.pNotified=true; q.push({title:'転職できるようになりました',body:`家ターンで「転職」が選べます。チケット単価が永続で +3 され、レベル・引越し・モチベーションは引き継いだまま、その他のスキルだけリセットされます。`}); }
+  if(!G.mNotified && level()>=moveLevelReq() && !G.moved){ G.mNotified=true; q.push({title:'引越しできるようになりました',body:`家ターンで「引越し」が選べます。家賃は上がりますが、モチベーション（場の枚数を増やす）や機械強化が解禁されます。`}); }
   if(q.length){ saveGame(); showNoticeQueue(q); } }
 let noticeQueue=[];
 function showNoticeQueue(q){ noticeQueue=q.slice(); popNotice(); }
