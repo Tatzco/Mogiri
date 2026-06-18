@@ -103,6 +103,25 @@
   .reset-btn{display:block; width:100%; margin:4px 0 0; cursor:pointer; font-family:var(--mono); font-weight:700;
     font-size:13px; padding:11px; border-radius:11px; border:1px solid #b0473a; background:#fff; color:#b0473a;}
   .reset-btn:active{transform:scale(.99);}
+  .home-card{margin:16px 0 0; padding:14px 14px 12px; border-radius:13px;
+    box-shadow:0 2px 7px rgba(90,62,28,.10);}
+  .home-card.move-card{background:linear-gradient(180deg,#cfe0f0,#a9c6e3); border:1px solid #3b6ea0;}
+  .home-card.prestige-card{background:linear-gradient(180deg,#e6d2ea,#cdaad2); border:1px solid #8a5a8f;}
+  .home-card h3{margin:0 0 6px; font-family:var(--display); font-weight:800; font-size:18px; letter-spacing:.04em;}
+  .home-card.move-card h3{color:#143a5e;}
+  .home-card.prestige-card h3{color:#4a1e50;}
+  .home-card p{margin:0; font-size:13px; line-height:1.6; white-space:pre-line;}
+  .home-card.move-card p{color:#1c3d5c;}
+  .home-card.prestige-card p{color:#4a2350;}
+  .home-card .card-btn-row{display:flex; justify-content:flex-end; margin-top:11px;}
+  .home-card .card-btn{cursor:pointer; font-family:var(--display); font-weight:800; font-size:14px;
+    padding:10px 22px; border-radius:11px;}
+  .home-card.move-card .card-btn{border:1px solid #3b6ea0; background:#fff; color:#143a5e;
+    box-shadow:0 3px 0 #3b6ea0;}
+  .home-card.move-card .card-btn:active{transform:translateY(2px); box-shadow:0 1px 0 #3b6ea0;}
+  .home-card.prestige-card .card-btn{border:1px solid #8a5a8f; background:#fff; color:#4a1e50;
+    box-shadow:0 3px 0 #8a5a8f;}
+  .home-card.prestige-card .card-btn:active{transform:translateY(2px); box-shadow:0 1px 0 #8a5a8f;}
   .shop-h{font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); font-weight:700; margin:2px 4px 9px;}
   .skill{display:flex; gap:11px; align-items:flex-start; background:#fff; border:1px solid var(--line);
     border-radius:12px; padding:11px 12px; margin-bottom:9px; box-shadow:0 1px 4px rgba(90,62,28,.05);}
@@ -190,6 +209,8 @@
     box-shadow:0 5px 0 var(--brass-d), 0 9px 15px rgba(120,82,20,.32);}
   .recv-btn:disabled{opacity:.5; cursor:default; box-shadow:none; filter:grayscale(.35);}
   .recv-btn:not(:disabled):active{transform:translateY(4px); box-shadow:0 1px 0 var(--brass-d);}
+  .recv-btn.on{background:radial-gradient(125% 130% at 50% 22%, #6db98a, #4E9E6E 56%, #3c7d57); color:#fff; border-color:#2e6342; box-shadow:0 5px 0 #2e6342, 0 9px 15px rgba(60,125,87,.42), 0 0 0 3px rgba(78,158,110,.28);}
+  .recv-btn.on:active{transform:translateY(4px); box-shadow:0 1px 0 #2e6342, 0 0 0 3px rgba(78,158,110,.28);}
   /* ===== skill FAB + circular reveal ===== */
   .shop-fab{position:absolute; left:14px; bottom:14px; width:54px; height:54px; border-radius:50%; z-index:7; display:none;
     cursor:pointer; border:1px solid var(--line); padding:0;
@@ -312,6 +333,18 @@
       </div>
       <button class="pay-btn" id="payBtn">未払いを支払う</button>
       <button class="cta" id="goWorkBtn" style="margin-top:20px;">出勤する</button>
+      <div class="home-card move-card" id="moveCard" style="display:none;">
+        <h3>引越し</h3>
+        <p>新スキル「モチベーション」をアンロック。
+レベルアップに応じて場に出せるカードが増える。
+また、機械の新たなレベルアップも追加。</p>
+        <div class="card-btn-row"><button class="card-btn" id="homeMoveBtn">引越し</button></div>
+      </div>
+      <div class="home-card prestige-card" id="prestigeCard" style="display:none;">
+        <h3>転職</h3>
+        <p>より給料のいい職場に転職。</p>
+        <div class="card-btn-row"><button class="card-btn" id="homePrestigeBtn">転職</button></div>
+      </div>
     </div>
   </section>
 
@@ -375,10 +408,6 @@
   <h2>スキル</h2>
   <p class="lead" style="margin-bottom:10px;">所持ユニット <b id="shop-units">0 U</b>　— 選んでいる間タイマーは止まります。</p>
   <div id="shop" style="height:calc(100vh - 260px); min-height:320px; overflow-y:auto; margin-bottom:14px;"></div>
-  <div class="milestones" id="shop-milestones" style="margin:0 0 12px;">
-    <button class="ms-btn move" id="moveBtn" style="display:none">引越し（Lv.20）</button>
-    <button class="ms-btn prestige" id="prestigeBtn" style="display:none">転職（プレステージ）</button>
-  </div>
   <button class="shop-close-fab" id="shop-close" aria-label="閉じる"><span></span><span></span></button>
 </div></div>
 
@@ -531,24 +560,31 @@ const SVGNS='http://www.w3.org/2000/svg';
 const SHIFT_MS=3*60*1000, BASE_TEAR_MS=500, BASE_BILL=80, MOVED_BILL=320, BILL_STEP=25, MOVE_LEVEL=20, PRESTIGE_LEVEL=25;
 const G={ scene:'home', day:1, units:0, owed:0, arrears:0, prestige:0, xp:0,
   valueLevel:0, stock:0, vet:false, machine:false, service:false, motivation:0, appraisal:false,
-  gearLevel:0, motorLevel:0, moved:false, pNotified:false, mNotified:false, shiftElapsed:0, shiftStartUnits:0, paused:false, machineAuto:false, actives:[] };
-function baseValue(){ return 1 + G.valueLevel + 3*G.prestige; }
+  gearLevel:0, motorLevel:0, moved:false, automatic:false, pNotified:false, mNotified:false, shiftElapsed:0, shiftStartUnits:0, paused:false, machineAuto:false, actives:[] };
+function baseValue(){ return (1 + G.valueLevel) * (G.prestige + 1); }
 function fieldCap(){ return 1 + G.motivation; }
 function onFieldCount(){ return G.actives.filter(a=>!a.placed && !a.resolved).length; }
-function moveLevelReq(){ return 25 + 10*G.prestige; }
-function prestigeLevelReq(){ return 60 + 25*G.prestige; }
+function moveLevelReq(){ return 30 + 10*G.prestige; }
+function prestigeLevelReq(){ return 50 + 15*G.prestige; }
 function machineCap(){ return 1 + G.gearLevel; }
 function tearMs(){ return Math.round(BASE_TEAR_MS/(1+0.4*G.motorLevel)); }
 function dailyBill(){ return (G.moved?MOVED_BILL:BASE_BILL) + BILL_STEP*Math.floor((G.day-1)/7); }
 function skillsCount(){ return (G.valueLevel>0?1:0)+(G.stock?1:0)+(G.vet?1:0)+(G.machine?1:0)+(G.service?1:0)+(G.motivation?1:0); }
 function pPriority(){ return Math.min(0.6, 0.05 + 0.02*G.stock); }
 function pFake(){ return skillsCount()>=2 ? 0.02 : 0; }
-function xpForLevel(L){ return Math.round(25*Math.pow(1.13,L-1)); }
+function xpForLevel(L){
+  /* Lv.60 まで: 25 × 1.13^(L-1) の指数カーブ
+     Lv.60 超: Lv.60→61 = 約31,500 を基点に +2000/Lv の線形
+     収入カーブが線形なので、コスト累積を2次関数に抑えて壁を作らない */
+  if(L<=60) return Math.round(25*Math.pow(1.13,L-1));
+  const base = Math.round(25*Math.pow(1.13,59)); /* ≈31,500 */
+  return base + (L-60)*2000;
+}
 function levelInfo(){ let L=1, acc=0; for(let i=0;i<999;i++){ const need=xpForLevel(L); if(G.xp>=acc+need){ acc+=need; L++; } else return {level:L,cur:G.xp-acc,need}; } return {level:L,cur:0,need:xpForLevel(L)}; }
 function level(){ return levelInfo().level; }
 /* ===== SAVE (autosave each turn) ===== */
 const STORE_KEY='nightReception.save.v2';
-const SAVE_FIELDS=['day','units','owed','arrears','prestige','xp','valueLevel','stock','vet','machine','service','motivation','appraisal','gearLevel','motorLevel','moved','pNotified','mNotified'];
+const SAVE_FIELDS=['day','units','owed','arrears','prestige','xp','valueLevel','stock','vet','machine','service','motivation','appraisal','gearLevel','motorLevel','moved','automatic','pNotified','mNotified'];
 let storageOK=true; try{ localStorage.setItem('__nr_t','1'); localStorage.removeItem('__nr_t'); }catch(e){ storageOK=false; }
 function saveGame(){ if(!storageOK) return; try{ const o={}; SAVE_FIELDS.forEach(k=>o[k]=G[k]); localStorage.setItem(STORE_KEY, JSON.stringify(o)); }catch(e){} }
 function loadGame(){ if(!storageOK) return false; try{ const s=localStorage.getItem(STORE_KEY); if(!s) return false; const o=JSON.parse(s); if(!o||typeof o!=='object') return false;
@@ -794,7 +830,7 @@ function updateClock(prog){ const mins=720+prog*420, hh=Math.floor(mins/60), mm=
     if(m) m.setAttribute('transform',`rotate(${(((mins%60)/60)*360).toFixed(1)} 50 50)`);
     if(pr) pr.setAttribute('stroke-dashoffset',(276.46*(1-Math.min(1,prog))).toFixed(1)); } }
 /* ===== CONTROLS / HINTS / SCENES ===== */
-function updateControls(){ recvBtn.disabled = onFieldCount()>=fieldCap();
+function updateControls(){ recvBtn.disabled = onFieldCount()>=fieldCap() && !G.automatic;
   if(G.machine){ feedBtn.style.display='block'; feedBtn.disabled=false;
     feedBtn.textContent = G.machineAuto?'機械 ON':'機械 OFF';
     feedBtn.classList.toggle('on', G.machineAuto); }
@@ -806,13 +842,14 @@ function refreshHints(){ if(!G.actives.length){ setHint(G.machine?(G.machineAuto
   else setHint(G.machine?(G.machineAuto?'機械 ON 稼働中（偽物は審美眼があれば自動でよける）':'下になぞってちぎる／「機械」ONで自動化'):'下になぞってミシン目をちぎる'); }
 function sizeZone(){ const sw=stage.clientWidth, tw=(fieldCap()>1? sw*0.62 : Math.min(sw*0.74,330));
   zone.style.width=Math.round(tw*0.70*1.05)+'px'; zone.style.height=Math.round(tw*0.50*1.1)+'px'; }
-function show(scene){ G.scene=scene; $('home').classList.toggle('on',scene==='home'); $('work').classList.toggle('on',scene==='work'); $('wkShopFab').classList.toggle('on',scene==='work'); }
+function show(scene){ G.scene=scene; $('home').classList.toggle('on',scene==='home'); $('work').classList.toggle('on',scene==='work'); $('wkShopFab').classList.toggle('on',scene==='work');
+  if(scene!=='work' && typeof recvAutoOn!=='undefined' && recvAutoOn) stopRecvAuto(); }
 function flashArrears(){ const c=$('tb-arrears'); c.classList.add('hot'); setTimeout(()=>c.classList.remove('hot'),500); }
 function syncTop(){ $('tb-units').textContent=Math.floor(G.units); $('tb-day').textContent=G.day; $('tb-arr').textContent=G.arrears; $('tb-lvl').textContent=level(); const wu=$('wkUnits'); if(wu) wu.textContent=Math.floor(G.units); }
 
 /* ===== HOME ===== */
 function shopEntries(){ const e=[];
-  e.push({name:'運営コスト増加', lv:G.valueLevel, desc:`チケット単価 +1（現在 ${baseValue()} U）`, cost:Math.round(60*Math.pow(1.7,G.valueLevel)), owned:false, buy:()=>{G.valueLevel++;}});
+  e.push({name:'運営コスト増加', lv:G.valueLevel, desc:`チケット単価 +${G.prestige+1}（現在 ${baseValue()} U・倍率×${G.prestige+1}）`, cost:Math.round(60*Math.pow(1.7,G.valueLevel)), owned:false, buy:()=>{G.valueLevel++;}});
   e.push({name:'株価下落', lv:G.stock, desc:`優待券の出現率 +2%（現在 ${Math.round(pPriority()*100)}%）`, cost:Math.round(150*Math.pow(1.6,G.stock)), owned:false, buy:()=>{G.stock++;}});
   e.push({name:'ベテラン', desc:'1枚で2枚ぶん処理（収支2倍／損も2倍）', cost:300, owned:G.vet, buy:()=>{G.vet=true;}});
   e.push({name:'接客態度', desc:'10%でチップがもらえる', cost:250, owned:G.service, buy:()=>{G.service=true;}});
@@ -820,6 +857,9 @@ function shopEntries(){ const e=[];
   if(G.moved){ if(G.motivation<7){ e.push({name:'モチベーション', lv:G.motivation, desc:`場に同時に出せる枚数 +1（現在 ${fieldCap()}枚）`, cost:Math.round(1200*Math.pow(1.7,G.motivation)), owned:false, buy:()=>{G.motivation++;}}); }
     else { e.push({name:'モチベーション', lv:G.motivation, desc:`場に同時に出せる枚数（上限 ${fieldCap()}枚）`, cost:0, owned:true, buy:()=>{}}); }
     e.push({name:'審美眼', desc:'束を一気にちぎる時、偽造券だけ自動でよけて本物だけちぎる', cost:900, owned:G.appraisal, buy:()=>{G.appraisal=true;}});
+    if(G.prestige>0){
+      e.push({name:'AUTOMATIC', desc:'受付ボタンがオルタネイト式に切り替わる（押すたびON/OFF）', cost:1500, owned:G.automatic, buy:()=>{G.automatic=true;}});
+    }
     if(G.machine){ e.push({name:'歯車強化', lv:G.gearLevel, desc:`機械に入れられる枚数 +1（現在 ${machineCap()}枚）`, cost:Math.round(500*Math.pow(1.8,G.gearLevel)), owned:false, buy:()=>{G.gearLevel++;}});
       e.push({name:'モーター強化', lv:G.motorLevel, desc:`ちぎる速度UP（現在 ${(tearMs()/1000).toFixed(2)}秒）`, cost:Math.round(400*Math.pow(1.8,G.motorLevel)), owned:false, buy:()=>{G.motorLevel++;}}); } }
   return e; }
@@ -829,6 +869,13 @@ function renderHome(){
   const li=levelInfo(); $('fin-lvl').textContent='Lv.'+li.level; $('fin-xp').textContent=li.cur+' / '+li.need;
   $('fin-lvbar').style.width=Math.min(100,(li.cur/li.need*100))+'%';
   const payBtn=$('payBtn'); payBtn.disabled=!(G.owed>0 && G.units>0); payBtn.textContent= G.owed>0?`未払い ${Math.floor(G.owed)} U を支払う`:'未払いはありません';
+  /* 引越し・転職カードの表示制御（家ターン専用） */
+  moveArmed=false; prestigeArmed=false; if(moveTimer) clearTimeout(moveTimer); if(prestigeTimer) clearTimeout(prestigeTimer);
+  const lvl=li.level;
+  const moveCard=$('moveCard'), prestigeCard=$('prestigeCard');
+  const moveBtn2=$('homeMoveBtn'), prestigeBtn2=$('homePrestigeBtn');
+  if(moveCard){ if(lvl>=moveLevelReq() && !G.moved){ moveCard.style.display='block'; if(moveBtn2) moveBtn2.textContent='引越し'; } else moveCard.style.display='none'; }
+  if(prestigeCard){ if(lvl>=prestigeLevelReq()){ prestigeCard.style.display='block'; if(prestigeBtn2) prestigeBtn2.textContent='転職'; } else prestigeCard.style.display='none'; }
   syncTop();
 }
 function renderShop(){
@@ -841,11 +888,8 @@ function renderShop(){
     const b=document.createElement('button'); const owned=sk.owned;
     if(owned){ b.className='buy owned'; b.textContent='取得済'; b.disabled=true; }
     else { b.className='buy'; b.textContent=sk.cost+' U'; b.disabled=G.units<sk.cost;
-      b.onclick=()=>{ if(G.units<sk.cost) return; G.units-=sk.cost; sk.buy(); Audio_.ensure(); Audio_.coin(); renderShop(); renderHome(); saveGame(); checkLimitDoom(); }; }
+      b.onclick=()=>{ if(G.units<sk.cost) return; G.units-=sk.cost; sk.buy(); Audio_.ensure(); Audio_.coin(); renderShop(); renderHome(); updateControls(); saveGame(); checkLimitDoom(); }; }
     row.appendChild(b); shop.appendChild(row); });
-  const mv=$('moveBtn'), pr=$('prestigeBtn'), lvl=levelInfo().level;
-  if(lvl>=moveLevelReq() && !G.moved){ mv.style.display='block'; mv.textContent='引越しする（家賃UP・解禁）'; } else mv.style.display='none';
-  if(lvl>=prestigeLevelReq()){ pr.style.display='block'; pr.textContent='転職する（単価+3・スキル一部保持）'; } else pr.style.display='none';
 }
 
 /* ===== FLOW ===== */
@@ -893,21 +937,46 @@ function closeOverlay(id){ $(id).classList.remove('on'); if(!$('settleOv').class
 /* ===== EVENTS ===== */
 let moveArmed=false, prestigeArmed=false, moveTimer=null, prestigeTimer=null, leaveArmed=false, leaveTimer=null, muted=false;
 function disarmLeave(){ leaveArmed=false; if(leaveTimer) clearTimeout(leaveTimer); leaveBtn.textContent='退勤'; }
-let recvHoldTimer=null, recvHeld=false;
-function recvCanSummon(){ return G.scene==='work' && !recvBtn.disabled && onFieldCount()<fieldCap(); }
-function recvBurst(){ if(!recvCanSummon()){ stopRecvHold(); return; } summonTicket(); recvHoldTimer=setTimeout(recvBurst,50); }
+let recvHoldTimer=null, recvHeld=false, recvAutoOn=false;
+function recvCanSummon(){ return G.scene==='work' && onFieldCount()<fieldCap(); }
+function recvBurst(){ if(!recvCanSummon() || recvBtn.disabled){ stopRecvHold(); return; } summonTicket(); recvHoldTimer=setTimeout(recvBurst,50); }
 function stopRecvHold(){ if(recvHoldTimer){ clearTimeout(recvHoldTimer); recvHoldTimer=null; } }
-recvBtn.addEventListener('pointerdown', e=>{ if(recvBtn.disabled) return; recvHeld=true; try{recvBtn.setPointerCapture(e.pointerId);}catch(_){}
-  if(recvCanSummon()) summonTicket(); recvHoldTimer=setTimeout(recvBurst,100); });
-recvBtn.addEventListener('pointerup', stopRecvHold);
-recvBtn.addEventListener('pointercancel', stopRecvHold);
-recvBtn.addEventListener('pointerleave', stopRecvHold);
+function startRecvAuto(){
+  if(G.scene!=='work') return;
+  recvAutoOn=true; recvBtn.classList.add('on');
+  try{ Audio_.ensure(); Audio_.resume(); }catch(_){}
+  recvAutoStep();
+}
+function stopRecvAuto(){
+  recvAutoOn=false; recvBtn.classList.remove('on');
+  if(recvHoldTimer){ clearTimeout(recvHoldTimer); recvHoldTimer=null; }
+}
+function recvAutoStep(){
+  if(!G.automatic || !recvAutoOn || G.scene!=='work'){ stopRecvAuto(); return; }
+  if(recvCanSummon()) summonTicket();
+  recvHoldTimer=setTimeout(recvAutoStep,50);
+}
+recvBtn.addEventListener('pointerdown', e=>{
+  if(G.automatic){
+    /* オルタネイト式：disabledでもトグル可能（ONからの停止を許可するため） */
+    if(recvAutoOn) stopRecvAuto();
+    else startRecvAuto();
+    return;
+  }
+  /* モーメンタリ式（既存） */
+  if(recvBtn.disabled) return;
+  recvHeld=true; try{recvBtn.setPointerCapture(e.pointerId);}catch(_){}
+  if(recvCanSummon()) summonTicket(); recvHoldTimer=setTimeout(recvBurst,100);
+});
+recvBtn.addEventListener('pointerup', ()=>{ if(!G.automatic) stopRecvHold(); });
+recvBtn.addEventListener('pointercancel', ()=>{ if(!G.automatic) stopRecvHold(); });
+recvBtn.addEventListener('pointerleave', ()=>{ if(!G.automatic) stopRecvHold(); });
 feedBtn.onclick=()=>{ toggleMachineAuto(); };
 leaveBtn.onclick=()=>{ if(leaveArmed){ disarmLeave(); endShift('early'); return; } leaveArmed=true; leaveBtn.textContent='本当に退勤？'; leaveTimer=setTimeout(disarmLeave,2600); };
 $('goWorkBtn').onclick=goWork;
 $('payBtn').onclick=()=>{ const pay=Math.min(G.units,G.owed); if(pay<=0) return; G.units-=pay; G.owed-=pay; if(G.owed<=0){ G.owed=0; G.arrears=0; } Audio_.register(); renderHome(); saveGame(); };
-$('moveBtn').onclick=()=>{ if(level()<moveLevelReq()||G.moved) return; if(moveArmed){ clearTimeout(moveTimer); moveArmed=false; G.moved=true; Audio_.chime(); renderShop(); renderHome(); saveGame(); return; }
-  moveArmed=true; $('moveBtn').textContent='本当に引越す？（家賃UP）'; moveTimer=setTimeout(()=>{ moveArmed=false; renderShop(); },2600); };
+$('homeMoveBtn').onclick=()=>{ if(level()<moveLevelReq()||G.moved) return; if(moveArmed){ clearTimeout(moveTimer); moveArmed=false; G.moved=true; G.units=0; Audio_.chime(); renderHome(); saveGame(); return; }
+  moveArmed=true; $('homeMoveBtn').textContent='本当に引越す？（所持金リセット）'; moveTimer=setTimeout(()=>{ moveArmed=false; if($('homeMoveBtn')) $('homeMoveBtn').textContent='引越し'; },2600); };
 let resetArmed=false, resetTimer=null;
 function updateModeToggleUI(){
   const tog=$('modeToggle'), slider=$('modeSlider'), knob=$('modeKnob');
@@ -970,15 +1039,15 @@ $('modeToggle').onclick=()=>{
   saveMode();
   updateModeToggleUI();
 };
-$('prestigeBtn').onclick=()=>{ if(level()<prestigeLevelReq()) return; if(prestigeArmed){ clearTimeout(prestigeTimer); prestigeArmed=false; doPrestige(); return; }
-  prestigeArmed=true; $('prestigeBtn').textContent='本当に転職？（一部スキルリセット）'; prestigeTimer=setTimeout(()=>{ prestigeArmed=false; renderShop(); },2600); };
+$('homePrestigeBtn').onclick=()=>{ if(level()<prestigeLevelReq()) return; if(prestigeArmed){ clearTimeout(prestigeTimer); prestigeArmed=false; doPrestige(); return; }
+  prestigeArmed=true; $('homePrestigeBtn').textContent='本当に転職？（一部スキルリセット）'; prestigeTimer=setTimeout(()=>{ prestigeArmed=false; if($('homePrestigeBtn')) $('homePrestigeBtn').textContent='転職'; },2600); };
 $('set-ok').onclick=afterSettle; $('over-restart').onclick=resetGame;
 $('notice-ok').onclick=()=>{ closeOverlay('noticeOv'); if(noticeQueue.length) popNotice(); };
 $('wkShopFab').onclick=()=>{ if(G.scene!=='work') return; renderShop(); const ov=$('shopOv'); const card=ov.querySelector('.shop-card');
   const r=$('wkShopFab').getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2;
   card.style.setProperty('--cx', cx+'px'); card.style.setProperty('--cy', cy+'px'); card.style.setProperty('--cyt', cy+'px');
   ov.classList.add('on'); G.paused=true; requestAnimationFrame(()=>requestAnimationFrame(()=>ov.classList.add('opening'))); };
-$('shop-close').onclick=()=>{ const ov=$('shopOv'); ov.classList.remove('opening'); setTimeout(()=>{ ov.classList.remove('on'); if(!$('settleOv').classList.contains('on')&&!$('overOv').classList.contains('on')&&!$('helpOv').classList.contains('on')&&!$('optsOv').classList.contains('on')&&!$('noticeOv').classList.contains('on')) G.paused=false; checkUnlockNotices(); },420); };
+$('shop-close').onclick=()=>{ const ov=$('shopOv'); ov.classList.remove('opening'); setTimeout(()=>{ ov.classList.remove('on'); if(!$('settleOv').classList.contains('on')&&!$('overOv').classList.contains('on')&&!$('helpOv').classList.contains('on')&&!$('optsOv').classList.contains('on')&&!$('noticeOv').classList.contains('on')) G.paused=false; },420); };
 $('helpBtn').onclick=()=>openOverlay('helpOv'); $('help-close').onclick=()=>closeOverlay('helpOv');
 $('muteBtn').onclick=()=>{ muted=!muted; Audio_.ensure(); Audio_.setMuted(muted); $('muteBtn').textContent=muted?'🔇':'🔊'; };
 let volPct=60; try{ const sv=localStorage.getItem('nightReception.vol'); if(sv!==null) volPct=Math.max(0,Math.min(100,parseInt(sv,10)||0)); }catch(_){}
@@ -1048,7 +1117,35 @@ function showTutPage(n){ tutPage=Math.max(0,Math.min(TUT_PAGES-1,n));
 function startTutorial(){ tutPage=0; showTutPage(0); const t=$('tutorial');
   t.classList.add('tut-enter');
   setTimeout(()=>{ t.classList.remove('tut-hidden'); requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.remove('tut-enter'))); }, 450); }
-function finishTutorial(){ $('tutorial').classList.add('tut-hidden'); hideTitleWithIrisIn(null); }
+function finishTutorial(){
+  /* tutorial と titleScreen の両方に同時にアイリスインのマスクを適用。
+     円が広がるにつれて両方が同じ領域で透明化するので、
+     title が単独で見える瞬間が無く、tutorial から直接ゲーム画面が露出する */
+  const ts = document.getElementById('titleScreen');
+  const tut = $('tutorial');
+  const W = window.innerWidth, H = window.innerHeight;
+  const cx = W/2, cy = H/2;
+  const maxR = Math.sqrt(cx*cx + cy*cy) + 4;
+  const DUR = 600;
+  let start = null;
+  function ease(t){ return 1 - Math.pow(1-t, 3); }
+  function frame(now){
+    if(!start) start = now;
+    const t = Math.min(1, (now - start) / DUR);
+    const e = ease(t);
+    const r = maxR * e;
+    const mask = `radial-gradient(circle ${r.toFixed(1)}px at ${cx}px ${cy}px, transparent 99%, black 100%)`;
+    if(ts){ ts.style.webkitMaskImage = mask; ts.style.maskImage = mask; }
+    if(tut){ tut.style.webkitMaskImage = mask; tut.style.maskImage = mask; }
+    if(t < 1){
+      requestAnimationFrame(frame);
+    } else {
+      if(ts){ ts.classList.add('ts-hidden'); ts.style.webkitMaskImage=''; ts.style.maskImage=''; }
+      if(tut){ tut.classList.add('tut-hidden'); tut.style.webkitMaskImage=''; tut.style.maskImage=''; }
+    }
+  }
+  requestAnimationFrame(frame);
+}
 $('tutPrev').onclick=()=>{ Audio_.ensure(); showTutPage(tutPage-1); };
 $('tutNext').onclick=()=>{ Audio_.ensure(); if(tutPage>=TUT_PAGES-1){ finishTutorial(); } else { showTutPage(tutPage+1); } };
 
