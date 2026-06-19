@@ -129,6 +129,9 @@
   .skill .nm{font-weight:700; font-size:14.5px;}
   .skill .nm .lv{font-family:var(--mono); font-size:11px; color:var(--brass-d); margin-left:6px;}
   .skill .ds{color:var(--ink2); font-size:12.5px; line-height:1.45; margin-top:2px;}
+  .skill.locked{background:#efeae0; border-style:dashed; filter:grayscale(.8); opacity:.55;}
+  .skill.locked .nm{color:#998a72; letter-spacing:.18em;}
+  .skill.locked .ds{color:#aa9d85; letter-spacing:.1em;}
   .buy{flex:none; align-self:center; min-width:80px; text-align:center; font-family:var(--mono); font-weight:700;
     font-size:13px; padding:9px 8px; border-radius:10px; border:1px solid var(--brass-d);
     background:linear-gradient(180deg,#f3dca6,#e7c479); color:#5a3d0c; cursor:pointer;}
@@ -449,13 +452,13 @@
     <dd>「受付」で出し、指で<b>下へなぞって</b>ちぎり、右上の枠に<b>置く</b>とユニットが入る。</dd>
 
     <dt>② 偽物はハンコで追放</dt>
-    <dd>たまに混じる<b>偽造券</b>は置かず<b>ハンコでタッチ</b>。偽物を置く／本物を追放すると減点。</dd>
+    <dd>たまに混じる<b>黄色い偽造券</b>は置かず<b>ハンコでタッチ</b>。偽物を置く／本物を追放すると減点。</dd>
 
     <dt>③ ユニットの使いみち</dt>
     <dd>貯めたユニットで<b>家賃を支払い</b>、出勤中は左下から<b>スキル</b>を買って強化できる。</dd>
 
     <dt>④ 家賃をためない</dt>
-    <dd>帰宅ごとに請求がたまる。<b>7日ためると督促状でゲームオーバー</b>。</dd>
+    <dd>帰宅ごとに請求がたまる。<b>7日ためると督促状が来てゲームオーバー</b>。</dd>
 
     <dt>⑤ アチーブメント</dt>
     <dd>特殊な条件を満たすと獲得。条件は遊びながら探す。</dd>
@@ -494,7 +497,6 @@
     <div id="optAchList" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
   <button class="reset-btn" id="optReset" style="margin-top:40px;">セーブを初期化（最初から）</button>
-  <button class="reset-btn" id="optDebugKairiki" style="margin-top:8px; background:#5a4a2a; color:#ffd98a; border-color:#7a6a4a;">🐛 デバッグ：カイリキー＋わたし直前へ</button>
   <div class="btnrow" style="margin-top:16px"><button class="btn" id="optClose">閉じる</button></div>
 </div></div>
 
@@ -577,7 +579,7 @@ const SVGNS='http://www.w3.org/2000/svg';
 const SHIFT_MS=3*60*1000, BASE_TEAR_MS=500, BASE_BILL=80, MOVED_BILL=320, BILL_STEP=25, MOVE_LEVEL=20, PRESTIGE_LEVEL=25;
 const G={ scene:'home', day:1, units:0, owed:0, arrears:0, prestige:0, xp:0,
   valueLevel:0, stock:0, vet:false, machine:false, service:false, motivation:0, appraisal:false,
-  gearLevel:0, motorLevel:0, moved:false, automatic:false, kairiki:0, watashi:0, pNotified:false, mNotified:false, shiftElapsed:0, shiftStartUnits:0, paused:false, machineAuto:false, actives:[] };
+  gearLevel:0, motorLevel:0, moved:false, automatic:false, kairiki:0, watashi:0, pNotified:false, mNotified:false, mvNotified:false, p2Notified:false, p3Notified:false, shiftElapsed:0, shiftStartUnits:0, paused:false, machineAuto:false, actives:[] };
 function baseValue(){ return (1 + G.valueLevel) * (G.prestige + 1); }
 function fieldCap(){ return 1 + G.motivation; }
 function windowCount(){ if(!G.kairiki) return 1; return Math.min(4, G.kairiki+1); }
@@ -610,7 +612,7 @@ function levelInfo(){ let L=1, acc=0; for(let i=0;i<999;i++){ const need=xpForLe
 function level(){ return levelInfo().level; }
 /* ===== SAVE (autosave each turn) ===== */
 const STORE_KEY='nightReception.save.v2';
-const SAVE_FIELDS=['day','units','owed','arrears','prestige','xp','valueLevel','stock','vet','machine','service','motivation','appraisal','gearLevel','motorLevel','moved','automatic','kairiki','watashi','pNotified','mNotified'];
+const SAVE_FIELDS=['day','units','owed','arrears','prestige','xp','valueLevel','stock','vet','machine','service','motivation','appraisal','gearLevel','motorLevel','moved','automatic','kairiki','watashi','pNotified','mNotified','mvNotified','p2Notified','p3Notified'];
 let storageOK=true; try{ localStorage.setItem('__nr_t','1'); localStorage.removeItem('__nr_t'); }catch(e){ storageOK=false; }
 function saveGame(){ if(!storageOK) return; try{ const o={}; SAVE_FIELDS.forEach(k=>o[k]=G[k]); localStorage.setItem(STORE_KEY, JSON.stringify(o)); }catch(e){} }
 function loadGame(){ if(!storageOK) return false; try{ const s=localStorage.getItem(STORE_KEY); if(!s) return false; const o=JSON.parse(s); if(!o||typeof o!=='object') return false;
@@ -789,12 +791,14 @@ function autoPlace(tk){ const a=aimZone(tk); tk.offset=a; tk.wrap.style.transiti
 function placeSuccess(tk){ if(tk.placed) return; tk.placed=true; const a=aimZone(tk);
   tk.wrap.style.transition='transform .22s ease-in, opacity .22s'; tk.wrap.style.transform=`translate(-50%,-50%) translate(${a.x}px,${a.y}px) scale(.16)`; tk.wrap.style.opacity='0';
   resolvePlace(tk); updateControls(); refreshHints(); setTimeout(()=>removeTicket(tk),220); }
-function addUnits(n){ G.units+=n; G.xp+=n; }
-function resolvePlace(tk){ if(tk.resolved) return; tk.resolved=true; const m=tk.mult, wm=windowMultiplier(tk.windowIndex), pm=watashiMultiplier();
+function addUnits(uGain, xpGain){ G.units+=uGain; G.xp+=(xpGain===undefined?uGain:xpGain); }
+function resolvePlace(tk){ if(tk.resolved) return; tk.resolved=true; const m=tk.mult, wm=windowMultiplier(tk.windowIndex), pm=watashiMultiplier(), wc=windowCount();
   if(tk.type==='fake'){ const loss=10*m*wm*pm; G.units=Math.max(0,G.units-loss); Audio_.buzz(); floatAt(tk,`−${loss}`,css('--red')); flashArrears(); }
-  else { const skillBonus=baseValue()-1; let gain=(tk.type==='priority'?5+skillBonus:baseValue())*m*wm*pm; addUnits(gain);
+  else { const skillBonus=baseValue()-1; const baseAmt=(tk.type==='priority'?5+skillBonus:baseValue());
+    let gain=baseAmt*m*wm*pm; let xpGain=Math.max(1,Math.round(baseAmt*m/wc)); /* XPはカイリキー倍率・わたし倍率を含まず、さらに窓数で割る */
+    addUnits(gain, xpGain);
     if(tk.type==='priority'){ Audio_.chime(); floatAt(tk,`+${gain}`,css('--teal')); } else { Audio_.ding(); floatAt(tk,`+${gain}`,'#ffd98a'); }
-    if(G.service && Math.random()<0.10){ const tip=Math.max(2,Math.round(baseValue()*1.5*wm*pm)); addUnits(tip); Audio_.coin(); setTimeout(()=>floatAt(tk,`+${tip} チップ`,css('--brass')),120); } }
+    if(G.service && Math.random()<0.10){ const tip=Math.max(2,Math.round(baseValue()*1.5*wm*pm)); const tipXp=Math.max(1,Math.round(baseValue()*1.5/wc)); addUnits(tip, tipXp); Audio_.coin(); setTimeout(()=>floatAt(tk,`+${tip} チップ`,css('--brass')),120); } }
   syncTop();
 }
 function removeTicket(tk){ if(tk.wrap&&tk.wrap.parentNode) tk.wrap.parentNode.removeChild(tk.wrap);
@@ -810,8 +814,8 @@ function stampTicket(tk){ if(!tk||tk.resolved||tk.placed) return; tk.processing=
   const go=tk.stampLayer.querySelector('.go');
   tween(200,(k)=>{ const s=2-Math.min(1,k*1.25); go.setAttribute('transform',`translate(${cx} ${cy}) scale(${Math.max(1,s).toFixed(3)}) translate(${-cx} ${-cy}) rotate(-7 ${cx} ${cy})`); go.style.opacity=Math.min(1,k*1.4).toFixed(2); },
     ()=>{ go.setAttribute('transform',`rotate(-7 ${cx} ${cy})`); });
-  if(!tk.resolved){ tk.resolved=true; const m=tk.mult, wm=windowMultiplier(tk.windowIndex), pm=watashiMultiplier();
-    if(tk.type==='fake'){ const r=2*m*wm*pm; addUnits(r); floatAt(tk,`追放 +${r}`,css('--green')); }
+  if(!tk.resolved){ tk.resolved=true; const m=tk.mult, wm=windowMultiplier(tk.windowIndex), pm=watashiMultiplier(), wc=windowCount();
+    if(tk.type==='fake'){ const r=2*m*wm*pm; const rXp=Math.max(1,Math.round(2*m/wc)); addUnits(r, rXp); floatAt(tk,`追放 +${r}`,css('--green')); }
     else { const loss=5*m*wm*pm; G.units=Math.max(0,G.units-loss); Audio_.buzz(); floatAt(tk,`本物だった −${loss}`,css('--red')); flashArrears(); } syncTop(); updateControls(); refreshHints(); }
   setTimeout(()=>{ tk.wrap.style.transition='transform .3s ease-in, opacity .3s';
     tk.wrap.style.transform=`translate(-50%,-50%) translate(${tk.offset.x}px,${(tk.offset.y+120)}px) rotate(8deg)`; tk.wrap.style.opacity='0';
@@ -951,34 +955,38 @@ function shopEntries(){ const e=[];
   e.push({name:'ベテラン', desc:'1枚で2枚ぶん処理（収支2倍／損も2倍）', cost:300, owned:G.vet, buy:()=>{G.vet=true;}});
   e.push({name:'接客態度', desc:'10%でチップがもらえる', cost:250, owned:G.service, buy:()=>{G.service=true;}});
   e.push({name:'機械化', desc:'ON/OFFで自動化。ONの間チケットを自動でちぎって提出', cost:700, owned:G.machine, buy:()=>{G.machine=true; machineBox.style.display='block';}});
-  if(G.moved){ e.push({name:'モチベーション', lv:G.motivation, desc:`場に同時に出せる枚数 +1（現在 ${fieldCap()}枚）`, cost:Math.round(1200*Math.pow(1.7,G.motivation)), owned:false, buy:()=>{G.motivation++;}});
+  /* 引越し解禁 → モチベーション・審美眼 */
+  if(G.moved){
+    e.push({name:'モチベーション', lv:G.motivation, desc:`場に同時に出せる枚数 +1（現在 ${fieldCap()}枚）`, cost:Math.round(1200*Math.pow(1.7,G.motivation)), owned:false, buy:()=>{G.motivation++;}});
     e.push({name:'審美眼', desc:'束を一気にちぎる時、偽造券だけ自動でよけて本物だけちぎる', cost:900, owned:G.appraisal, buy:()=>{G.appraisal=true;}});
-    if(G.prestige>0){
-      e.push({name:'AUTOMATIC', desc:'受付ボタンがオルタネイト式に切り替わる（押すたびON/OFF）', cost:1500, owned:G.automatic, buy:()=>{G.automatic=true;}});
-      if(G.automatic && G.machine && G.prestige>=2){
-        const klv=G.kairiki, kmax=99;
-        if(klv<kmax){
-          const wcNext=Math.min(4,klv+2), descAdd=klv===0?'枠内を縦に二窓に分割。各窓で独立にもぎり作業':
-            klv===1?'三窓（上1・下2）に拡張':
-            klv===2?'四窓（2×2）に拡張':
-            `1窓の倍率＋1（U・XP両方に乗算）`;
-          const cost=klv===0?12000:Math.round(3500*Math.pow(1.35,klv-1));
-          e.push({name:'カイリキー', lv:klv, desc:`${descAdd}（現在 ${windowCount()}窓）`, cost, owned:false, buy:()=>{G.kairiki++; needsWindowRebuild=true; if(G.scene==='work') sizeZone();}});
-        }
-      }
-    }
-    if(G.machine){ e.push({name:'歯車強化', lv:G.gearLevel, desc:`機械に入れられる枚数 +1（現在 ${machineCap()}枚）`, cost:Math.round(500*Math.pow(1.8,G.gearLevel)), owned:false, buy:()=>{G.gearLevel++;}});
-      e.push({name:'モーター強化', lv:G.motorLevel, desc:`ちぎる速度UP（現在 ${(tearMs()/1000).toFixed(2)}秒）`, cost:Math.round(400*Math.pow(1.8,G.motorLevel)), owned:false, buy:()=>{G.motorLevel++;}}); }
-    if(G.prestige>=3){
-      const wlv=G.watashi, wmax=99;
-      if(wlv<wmax){
-        const nextMult=wlv+2, descW=wlv===0?'パラレルワールドの門が開き、もう1人の自分と協力する。全ての収支が ×2':
-          `もう1人の自分が増える。全ての収支が ×${nextMult}（現在 ×${watashiMultiplier()}）`;
-        const wcost=Math.round(100000*Math.pow(4,wlv));
-        e.push({name:'わたし…？', lv:wlv, desc:descW, cost:wcost, owned:false, buy:()=>{G.watashi++; syncTop();}});
-      }
-    }
-  }
+  } else { e.push({locked:true}); e.push({locked:true}); }
+  /* 引越し+転職1回 → AUTOMATIC */
+  if(G.moved && G.prestige>0){
+    e.push({name:'AUTOMATIC', desc:'受付ボタンがオルタネイト式に切り替わる（押すたびON/OFF）', cost:1500, owned:G.automatic, buy:()=>{G.automatic=true;}});
+  } else { e.push({locked:true}); }
+  /* 引越し+機械化 → 歯車・モーター */
+  if(G.moved && G.machine){
+    e.push({name:'歯車強化', lv:G.gearLevel, desc:`機械に入れられる枚数 +1（現在 ${machineCap()}枚）`, cost:Math.round(500*Math.pow(1.8,G.gearLevel)), owned:false, buy:()=>{G.gearLevel++;}});
+    e.push({name:'モーター強化', lv:G.motorLevel, desc:`ちぎる速度UP（現在 ${(tearMs()/1000).toFixed(2)}秒）`, cost:Math.round(400*Math.pow(1.8,G.motorLevel)), owned:false, buy:()=>{G.motorLevel++;}});
+  } else { e.push({locked:true}); e.push({locked:true}); }
+  /* AUTOMATIC + 機械化 + 転職2回 → カイリキー */
+  if(G.moved && G.automatic && G.machine && G.prestige>=2){
+    const klv=G.kairiki;
+    const descAdd=klv===0?'枠内を縦に二窓に分割。各窓で独立にもぎり作業':
+      klv===1?'三窓（上1・下2）に拡張':
+      klv===2?'四窓（2×2）に拡張':
+      `1窓の倍率＋1（U・XP両方に乗算）`;
+    const cost=Math.round(150000*Math.pow(2.0,klv));
+    e.push({name:'カイリキー', lv:klv, desc:`${descAdd}（現在 ${windowCount()}窓）`, cost, owned:false, buy:()=>{G.kairiki++; needsWindowRebuild=true; if(G.scene==='work') sizeZone();}});
+  } else { e.push({locked:true}); }
+  /* 転職3回 → わたし…？ */
+  if(G.moved && G.prestige>=3){
+    const wlv=G.watashi;
+    const nextMult=wlv+2, descW=wlv===0?'パラレルワールドの門が開き、もう1人の自分と協力する。全ての収支が ×2':
+      `もう1人の自分が増える。全ての収支が ×${nextMult}（現在 ×${watashiMultiplier()}）`;
+    const wcost=Math.round(500000*Math.pow(2.5,wlv));
+    e.push({name:'わたし…？', lv:wlv, desc:descW, cost:wcost, owned:false, buy:()=>{G.watashi++; syncTop();}});
+  } else { e.push({locked:true}); }
   return e; }
 function renderHome(){
   $('fin-units').textContent=Math.floor(G.units)+' U';
@@ -1000,6 +1008,12 @@ function renderShop(){
   $('shop-units').textContent=Math.floor(G.units)+' U';
   const shop=$('shop'); shop.innerHTML='';
   shopEntries().forEach(sk=>{ const row=document.createElement('div'); row.className='skill';
+    if(sk.locked){
+      row.classList.add('locked');
+      row.innerHTML=`<div class="body"><div class="nm">???</div><div class="ds">???</div></div>`;
+      const b=document.createElement('button'); b.className='buy'; b.textContent='???'; b.disabled=true;
+      row.appendChild(b); shop.appendChild(row); return;
+    }
     const lvTxt=(sk.lv!==undefined)?`<span class="lv">Lv.${sk.lv}</span>`:'';
     row.innerHTML=`<div class="body"><div class="nm">${sk.name}${lvTxt}</div><div class="ds">${sk.desc}</div></div>`;
     const b=document.createElement('button'); const owned=sk.owned;
@@ -1027,6 +1041,9 @@ function afterSettle(){ closeOverlay('settleOv'); show('home'); renderHome(); ch
 function checkUnlockNotices(){ const q=[];
   if(!G.pNotified && level()>=prestigeLevelReq()){ G.pNotified=true; q.push({title:'転職できるようになりました',body:`家ターンで「転職」が選べます。チケット単価が永続で +3 され、レベル・引越し・モチベーションは引き継いだまま、その他のスキルだけリセットされます。`}); }
   if(!G.mNotified && level()>=moveLevelReq() && !G.moved){ G.mNotified=true; q.push({title:'引越しできるようになりました',body:`家ターンで「引越し」が選べます。家賃は上がりますが、モチベーション（場の枚数を増やす）や機械強化が解禁されます。`}); }
+  if(!G.mvNotified && G.moved){ G.mvNotified=true; q.push({title:'新しいスキルが追加されました', body:'モチベーション・審美眼がショップに登場しました。'}); }
+  if(!G.p2Notified && G.moved && G.prestige>=2){ G.p2Notified=true; q.push({title:'新しいスキルが追加されました', body:'カイリキーがショップに登場しました。'}); }
+  if(!G.p3Notified && G.moved && G.prestige>=3){ G.p3Notified=true; q.push({title:'新しいスキルが追加されました', body:'わたし…？がショップに登場しました。'}); }
   if(q.length){ saveGame(); showNoticeQueue(q); } }
 let noticeQueue=[];
 function showNoticeQueue(q){ noticeQueue=q.slice(); popNotice(); }
@@ -1053,13 +1070,13 @@ function doGameOver(reason){ G.scene='gameover'; clearSave(); Audio_.gameover();
   openOverlay('overOv'); }
 function doPrestige(){ G.prestige++; G.owed=0; G.arrears=0; G.day=1;
   G.valueLevel=0; G.stock=0; G.vet=false; G.machine=false; G.service=false; G.gearLevel=0; G.motorLevel=0;
-  Audio_.chime(); renderShop(); renderHome(); saveGame(); }
+  Audio_.chime(); renderShop(); renderHome(); saveGame(); checkUnlockNotices(); }
 function resetGame(){ clearSave(); 
   /* 全オーバーレイを閉じる（ショップ・精算・お知らせなど含む） */
   ['overOv','optsOv','shopOv','settleOv','helpOv','noticeOv'].forEach(id=>{ const el=$(id); if(el) el.classList.remove('on'); });
   G.paused=false;
   Object.assign(G,{ scene:'home', day:1, units:0, owed:0, arrears:0, prestige:0, xp:0,
-  valueLevel:0, stock:0, vet:false, machine:false, service:false, motivation:0, appraisal:false, gearLevel:0, motorLevel:0, moved:false, automatic:false, kairiki:0, watashi:0, pNotified:false, mNotified:false,
+  valueLevel:0, stock:0, vet:false, machine:false, service:false, motivation:0, appraisal:false, gearLevel:0, motorLevel:0, moved:false, automatic:false, kairiki:0, watashi:0, pNotified:false, mNotified:false, mvNotified:false, p2Notified:false, p3Notified:false,
   shiftElapsed:0, shiftStartUnits:0, paused:false, machineAuto:false, actives:[] });
   /* 念のため明示的に */
   G.kairiki=0; G.automatic=false; G.machine=false; G.watashi=0;
@@ -1117,7 +1134,7 @@ feedBtn.onclick=()=>{ toggleMachineAuto(); };
 leaveBtn.onclick=()=>{ if(leaveArmed){ disarmLeave(); endShift('early'); return; } leaveArmed=true; leaveBtn.textContent='本当に退勤？'; leaveTimer=setTimeout(disarmLeave,2600); };
 $('goWorkBtn').onclick=goWork;
 $('payBtn').onclick=()=>{ const pay=Math.min(G.units,G.owed); if(pay<=0) return; G.units-=pay; G.owed-=pay; if(G.owed<=0){ G.owed=0; G.arrears=0; } Audio_.register(); renderHome(); saveGame(); };
-$('homeMoveBtn').onclick=()=>{ if(level()<moveLevelReq()||G.moved) return; if(moveArmed){ clearTimeout(moveTimer); moveArmed=false; G.moved=true; G.units=0; Audio_.chime(); renderHome(); saveGame(); return; }
+$('homeMoveBtn').onclick=()=>{ if(level()<moveLevelReq()||G.moved) return; if(moveArmed){ clearTimeout(moveTimer); moveArmed=false; G.moved=true; G.units=0; Audio_.chime(); renderHome(); saveGame(); checkUnlockNotices(); return; }
   moveArmed=true; $('homeMoveBtn').textContent='本当に引越す？（所持金リセット）'; moveTimer=setTimeout(()=>{ moveArmed=false; if($('homeMoveBtn')) $('homeMoveBtn').textContent='引越し'; },2600); };
 let resetArmed=false, resetTimer=null;
 function updateModeToggleUI(){
@@ -1176,17 +1193,6 @@ $('gearBtn').onclick=()=>{ resetArmed=false; if(resetTimer) clearTimeout(resetTi
 $('optClose').onclick=()=>closeOverlay('optsOv');
 $('optReset').onclick=()=>{ if(resetArmed){ if(resetTimer) clearTimeout(resetTimer); resetArmed=false; closeOverlay('optsOv'); clearSave(); resetGame(); return; }
   resetArmed=true; $('optReset').textContent='本当に初期化？（もう一度タップ）'; resetTimer=setTimeout(()=>{ resetArmed=false; $('optReset').textContent='セーブを初期化（最初から）'; },2600); };
-$('optDebugKairiki').onclick=()=>{
-  /* テスト用：転職3回 + 引越し + 機械化&AUTOMATIC + カイリキー Lv3（4窓） の状態。
-     所持U 200000、勝負次第でWATASHI も買える。歯車9・モーター10でリストラ寸前。 */
-  Object.assign(G,{ scene:'home', day:5, units:200000, owed:0, arrears:0, prestige:3, xp:80000,
-    valueLevel:0, stock:0, vet:true, machine:true, service:true, motivation:3, appraisal:true,
-    gearLevel:9, motorLevel:10, moved:true, automatic:true, kairiki:3, watashi:0, pNotified:true, mNotified:true,
-    shiftElapsed:0, shiftStartUnits:0, paused:false, machineAuto:false, actives:[] });
-  saveGame(); closeOverlay('optsOv'); renderHome(); syncTop();
-  setHint(''); $('optDebugKairiki').textContent='✓ ジャンプ完了（ショップで「わたし…？」を試す）';
-  setTimeout(()=>{ $('optDebugKairiki').textContent='🐛 デバッグ：カイリキー＋わたし直前へ'; },3000);
-};
 $('modeToggle').onclick=()=>{
   limitMode = !limitMode;
   saveMode();
