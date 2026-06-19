@@ -974,7 +974,7 @@ function shopEntries(){ const e=[];
       if(wlv<wmax){
         const nextMult=wlv+2, descW=wlv===0?'パラレルワールドの門が開き、もう1人の自分と協力する。全ての収支が ×2':
           `もう1人の自分が増える。全ての収支が ×${nextMult}（現在 ×${watashiMultiplier()}）`;
-        const wcost=wlv===0?50000:Math.round(25000*Math.pow(1.6,wlv-1));
+        const wcost=Math.round(100000*Math.pow(4,wlv));
         e.push({name:'わたし…？', lv:wlv, desc:descW, cost:wcost, owned:false, buy:()=>{G.watashi++; syncTop();}});
       }
     }
